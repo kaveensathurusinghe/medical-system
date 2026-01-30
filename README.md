@@ -2,7 +2,7 @@
 
 A comprehensive medical management system built with Spring Boot framework, designed to handle medical operations with security and web interface capabilities.
 
-## 🛠️ Tools and Frameworks Used
+## Tools and Frameworks Used
 
 ### Backend Frameworks
 - **Spring Boot 3.4.5** - Main application framework
@@ -25,7 +25,7 @@ A comprehensive medical management system built with Spring Boot framework, desi
 - **Spring Boot Test** - Testing utilities
 - **Spring Security Test** - Security testing support
 
-## 🎯 OOP Concepts Used
+## OOP Concepts Used
 
 ### Core OOP Principles
 - **Encapsulation** - Data hiding through private fields and public methods
@@ -45,7 +45,7 @@ A comprehensive medical management system built with Spring Boot framework, desi
 - **Aspect-Oriented Programming** - Cross-cutting concerns
 - **Bean Lifecycle Management** - Object creation and destruction
 
-## 📊 Data Structures Used
+## Data Structures Used
 
 ### Collection Framework
 - **List** - Ordered collections for patient records, appointments
@@ -64,7 +64,7 @@ A comprehensive medical management system built with Spring Boot framework, desi
 - **Appointment Scheduling** - Time-based data organization
 - **User Authentication** - Security credential management
 
-## 🚀 Setup and Installation
+## Setup and Installation
 
 ### Prerequisites
 - **Java 21** or higher
@@ -121,7 +121,7 @@ The application includes Spring Security with:
 - CSRF protection
 - Session management
 
-## 🏗️ Project Structure
+## Project Structure
 
 ```
 medical-system/
@@ -148,7 +148,7 @@ medical-system/
 └── README.md
 ```
 
-## 🔧 Development
+## Development
 
 ### Running Tests
 ```bash
@@ -166,7 +166,7 @@ The application includes Spring Boot DevTools for:
 ./mvnw clean package
 ```
 
-## 📋 Features
+## Features
 
 - **User Authentication & Authorization**
 - **Medical Record Management**
@@ -175,7 +175,7 @@ The application includes Spring Boot DevTools for:
 - **Secure Web Interface**
 - **RESTful API Support**
 
-## 🤝 Contributing
+## Contributing
 
 1. Fork the repository
 2. Create a feature branch (`git checkout -b feature/amazing-feature`)
@@ -183,15 +183,15 @@ The application includes Spring Boot DevTools for:
 4. Push to the branch (`git push origin feature/amazing-feature`)
 5. Open a Pull Request
 
-## 📄 License
+## License
 
 This project is open source and available under the [MIT License](LICENSE).
 
-## 👨‍💻 Author
+## Author
 
 **IT-23161160** - [GitHub Profile](https://github.com/IT-23161160)
 
-## 📞 Support
+## Support
 
 For support and questions, please open an issue in the GitHub repository.
 
