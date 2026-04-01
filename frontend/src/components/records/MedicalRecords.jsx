@@ -1,20 +1,23 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { FileText } from 'lucide-react';
+import api from '../../services/api';
 
 const MedicalRecords = () => {
     const [records, setRecords] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [error, setError] = useState('');
 
     useEffect(() => {
         const fetchRecords = async () => {
             try {
-                const response = await axios.get('/api/records');
+                const response = await api.get('/records');
                 setRecords(response.data);
                 setLoading(false);
-            } catch (error) {
-                console.error("Error fetching medical records:", error);
+            } catch (fetchError) {
+                setError('Error fetching medical records.');
+                console.error("Error fetching medical records:", fetchError);
                 setLoading(false);
             }
         };
@@ -55,6 +58,8 @@ const MedicalRecords = () => {
                 <h1 className="text-4xl font-bold text-gray-800">Medical Records</h1>
             </div>
 
+            {error && <p className="mb-4 rounded-lg bg-red-50 px-4 py-3 text-sm text-red-700">{error}</p>}
+
             <motion.div
                 className="bg-white shadow-2xl rounded-lg overflow-hidden"
                 variants={containerVariants}
@@ -70,6 +75,7 @@ const MedicalRecords = () => {
                                 <th className="text-left py-4 px-6">Doctor ID</th>
                                 <th className="text-left py-4 px-6">Date</th>
                                 <th className="text-left py-4 px-6">Diagnosis</th>
+                                <th className="text-left py-4 px-6">Actions</th>
                             </tr>
                         </thead>
                         <tbody className="text-gray-700">
@@ -84,6 +90,11 @@ const MedicalRecords = () => {
                                     <td className="py-4 px-6">{record.doctorId}</td>
                                     <td className="py-4 px-6">{new Date(record.recordDate).toLocaleDateString()}</td>
                                     <td className="py-4 px-6">{record.diagnosis}</td>
+                                    <td className="py-4 px-6">
+                                        <Link to={`/records/view/${record.id}`} className="text-blue-600 hover:underline">
+                                            View Details
+                                        </Link>
+                                    </td>
                                 </motion.tr>
                             ))}
                         </tbody>

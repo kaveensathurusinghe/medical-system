@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import api from '../../services/api';
 import { motion } from 'framer-motion';
+import { resolveUserId } from '../../utils/sessionUser';
 
 const AppointmentsHistory = () => {
     const [appointments, setAppointments] = useState([]);
@@ -10,8 +12,7 @@ const AppointmentsHistory = () => {
     useEffect(() => {
         const fetchAppointments = async () => {
             try {
-                // Hardcoded doctor ID, replace with auth context
-                const doctorId = 1;
+                const doctorId = await resolveUserId('ROLE_DOCTOR');
                 const response = await api.get(`/doctors/${doctorId}/appointments`);
                 setAppointments(response.data);
                 setLoading(false);
@@ -100,6 +101,14 @@ const AppointmentsHistory = () => {
                             <div className="mt-4 text-gray-600">
                                 <p><span className="font-semibold">Date:</span> {new Date(appointment.appointmentTime).toLocaleString()}</p>
                                 <p><span className="font-semibold">Reason:</span> {appointment.reason}</p>
+                            </div>
+                            <div className="mt-4">
+                                <Link
+                                    to={`/records/new/${appointment.appointmentId}`}
+                                    className="inline-flex rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white hover:bg-indigo-700"
+                                >
+                                    Add Medical Record
+                                </Link>
                             </div>
                         </div>
                     </motion.div>

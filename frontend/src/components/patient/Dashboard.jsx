@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import api from '../../services/api';
 import { motion } from 'framer-motion';
 import { Calendar, List, FileText } from 'lucide-react';
+import { resolveUserId } from '../../utils/sessionUser';
 
 const StatCard = ({ icon, label, value, color }) => (
     <motion.div 
@@ -31,9 +32,7 @@ const Dashboard = () => {
     useEffect(() => {
         const fetchDashboardData = async () => {
             try {
-                // Assume the logged-in patient's ID is available, e.g., from auth context
-                // For now, hardcode numeric ID 1. Replace with actual logic.
-                const patientId = 1; 
+                const patientId = await resolveUserId('ROLE_PATIENT');
 
                 const statsPromise = api.get(`/patients/${patientId}/dashboard-stats`);
                 const appointmentsPromise = api.get(`/appointments/patient/${patientId}?limit=5`);

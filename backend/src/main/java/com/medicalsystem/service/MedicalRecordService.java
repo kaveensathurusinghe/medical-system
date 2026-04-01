@@ -32,8 +32,20 @@ public class MedicalRecordService {
         return medicalRecordRepository.findById(id);
     }
 
+    public Optional<MedicalRecord> getRecordByAppointmentId(Long appointmentId) {
+        return medicalRecordRepository.findByAppointmentId(appointmentId);
+    }
+
     public List<MedicalRecord> getRecordsByPatientId(Long patientId) {
         return medicalRecordRepository.findByPatientId(patientId);
+    }
+
+    public List<MedicalRecord> getRecordsByDoctorId(Long doctorId) {
+        return medicalRecordRepository.findByDoctorId(doctorId);
+    }
+
+    public List<MedicalRecord> getRecordsByDoctorAndPatientId(Long doctorId, Long patientId) {
+        return medicalRecordRepository.findByDoctorIdAndPatientId(doctorId, patientId);
     }
 
     public long countRecords() {

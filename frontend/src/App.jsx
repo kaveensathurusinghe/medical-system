@@ -73,10 +73,17 @@ const RequireRole = ({ allowedRoles, children, loginPath = '/login' }) => {
 
         if (role) {
           localStorage.setItem('role', role);
+          const userId = response?.data?.userId;
+          if (userId !== null && userId !== undefined) {
+            localStorage.setItem('userId', String(userId));
+          } else {
+            localStorage.removeItem('userId');
+          }
           setResolvedRole(role);
         } else {
           localStorage.removeItem('token');
           localStorage.removeItem('role');
+          localStorage.removeItem('userId');
           setResolvedRole(null);
         }
       } catch (error) {
@@ -85,6 +92,7 @@ const RequireRole = ({ allowedRoles, children, loginPath = '/login' }) => {
         }
         localStorage.removeItem('token');
         localStorage.removeItem('role');
+        localStorage.removeItem('userId');
         setResolvedRole(null);
       } finally {
         if (active) {
@@ -154,7 +162,7 @@ function App() {
         <Route path="/records/form" element={<RequireRole allowedRoles={['ROLE_DOCTOR', 'ROLE_ADMIN']}><RecordsForm /></RequireRole>} />
         <Route path="/records/medical-records" element={<RequireRole allowedRoles={['ROLE_DOCTOR', 'ROLE_ADMIN']}><MedicalRecords /></RequireRole>} />
         <Route path="/records/patient-records" element={<RequireRole allowedRoles={['ROLE_PATIENT', 'ROLE_ADMIN']}><PatientRecords /></RequireRole>} />
-        <Route path="/records/view/:recordId" element={<RequireRole allowedRoles={['ROLE_PATIENT', 'ROLE_ADMIN']}><PatientLayout><ViewRecord /></PatientLayout></RequireRole>} />
+        <Route path="/records/view/:recordId" element={<RequireRole allowedRoles={['ROLE_PATIENT', 'ROLE_DOCTOR', 'ROLE_ADMIN']}><ViewRecord /></RequireRole>} />
         <Route path="/records/new/:appointmentId" element={<RequireRole allowedRoles={['ROLE_DOCTOR', 'ROLE_ADMIN']}><DoctorLayout><RecordsForm /></DoctorLayout></RequireRole>} />
 
         <Route path="/timeslots/doctor" element={<RequireRole allowedRoles={['ROLE_DOCTOR', 'ROLE_ADMIN']}><DoctorLayout><DoctorTimeSlots /></DoctorLayout></RequireRole>} />

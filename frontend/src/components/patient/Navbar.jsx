@@ -1,10 +1,12 @@
 import React from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
-import { Activity, CalendarDays, CreditCard, PencilLine } from 'lucide-react';
+import { Activity, CalendarDays, CalendarPlus, CreditCard, FileText, PencilLine } from 'lucide-react';
 import api from '../../services/api';
 
 const links = [
   { to: '/patient/dashboard', label: 'Dashboard', icon: Activity },
+  { to: '/patient/appointments/book', label: 'Book', icon: CalendarPlus },
+  { to: '/records/patient-records', label: 'Records', icon: FileText },
   { to: '/patient/history', label: 'History', icon: CalendarDays },
   { to: '/patient/payment-history', label: 'Payments', icon: CreditCard },
   { to: '/patient/edit', label: 'Profile', icon: PencilLine },
@@ -21,6 +23,7 @@ const Navbar = () => {
     } finally {
       localStorage.removeItem('token');
       localStorage.removeItem('role');
+      localStorage.removeItem('userId');
       navigate('/');
     }
   };

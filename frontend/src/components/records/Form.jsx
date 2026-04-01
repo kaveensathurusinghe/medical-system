@@ -15,16 +15,24 @@ const Form = () => {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
+
+        if (!appointmentId) {
+            setError('Missing appointment ID. Please open this form from an appointment.');
+            return;
+        }
+
         try {
+            setError(null);
             await api.post('/records', {
                 appointmentId,
                 diagnosis,
                 treatment,
                 notes,
             });
-            navigate(`/doctor/appointments`);
+            navigate('/doctor/appointments-history');
         } catch (err) {
-            setError('Failed to create medical record.');
+            const message = err?.response?.data?.content || err?.response?.data?.message || 'Failed to create medical record.';
+            setError(message);
             console.error(err);
         }
     };

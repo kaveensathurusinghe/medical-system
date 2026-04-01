@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import api from '../../services/api';
 import { motion } from 'framer-motion';
+import { resolveUserId } from '../../utils/sessionUser';
 
 const PaymentHistory = () => {
     const [payments, setPayments] = useState([]);
@@ -10,8 +11,7 @@ const PaymentHistory = () => {
     useEffect(() => {
         const fetchPayments = async () => {
             try {
-                // Hardcoded patient ID, replace with auth context
-                const patientId = 1;
+                const patientId = await resolveUserId('ROLE_PATIENT');
                 const response = await api.get(`/payments/patient/${patientId}`);
                 setPayments(response.data);
                 setLoading(false);

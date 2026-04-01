@@ -30,6 +30,7 @@ const Login = () => {
 
       const token = response?.data?.token;
       const role = response?.data?.role;
+      const userId = response?.data?.userId;
 
       if (!token || !role || !roleRoute[role]) {
         throw new Error('Unexpected login response');
@@ -37,8 +38,14 @@ const Login = () => {
 
       localStorage.setItem('token', token);
       localStorage.setItem('role', role);
+      if (userId !== null && userId !== undefined) {
+        localStorage.setItem('userId', String(userId));
+      } else {
+        localStorage.removeItem('userId');
+      }
       navigate(roleRoute[role]);
     } catch (err) {
+        localStorage.removeItem('userId');
         const message = err?.response?.data?.content || err?.response?.data?.message || 'Login failed';
         setError(message);
     } finally {

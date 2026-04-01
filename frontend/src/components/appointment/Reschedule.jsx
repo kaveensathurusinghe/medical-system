@@ -45,7 +45,11 @@ const Reschedule = () => {
             return;
         }
         try {
-            const selectedSlotDetails = timeSlots.find(slot => slot.id === selectedSlot);
+            const selectedSlotDetails = timeSlots.find(slot => String(slot.id) === selectedSlot);
+            if (!selectedSlotDetails) {
+                setError('Selected time slot is invalid. Please choose again.');
+                return;
+            }
             await api.put(`/appointments/reschedule`, {
                 id: appointment.appointmentId,
                 newAppointmentTime: selectedSlotDetails.startTime,
@@ -87,15 +91,15 @@ const Reschedule = () => {
                                     type="radio" 
                                     id={`slot-${slot.id}`} 
                                     name="time-slot" 
-                                    value={slot.id}
-                                    checked={selectedSlot === slot.id}
+                                    value={String(slot.id)}
+                                    checked={selectedSlot === String(slot.id)}
                                     onChange={(e) => setSelectedSlot(e.target.value)}
                                     className="hidden"
                                 />
                                 <label 
                                     htmlFor={`slot-${slot.id}`} 
                                     className={`block text-center p-4 rounded-lg cursor-pointer transition-colors ${
-                                        selectedSlot === slot.id 
+                                        selectedSlot === String(slot.id) 
                                             ? 'bg-indigo-600 text-white shadow-md' 
                                             : 'bg-gray-100 hover:bg-indigo-100'
                                     }`}

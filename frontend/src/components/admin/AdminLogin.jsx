@@ -24,6 +24,7 @@ const AdminLogin = () => {
 
       const token = response?.data?.token;
       const role = response?.data?.role;
+      const userId = response?.data?.userId;
 
       if (!token || role !== 'ROLE_ADMIN') {
         throw new Error('Only admin users can sign in here.');
@@ -31,10 +32,16 @@ const AdminLogin = () => {
 
       localStorage.setItem('token', token);
       localStorage.setItem('role', role);
+      if (userId !== null && userId !== undefined) {
+        localStorage.setItem('userId', String(userId));
+      } else {
+        localStorage.removeItem('userId');
+      }
       navigate('/admin/dashboard');
     } catch (err) {
       localStorage.removeItem('token');
       localStorage.removeItem('role');
+      localStorage.removeItem('userId');
       const message = err?.response?.data?.content || err?.message || 'Admin login failed';
       setError(message);
     } finally {

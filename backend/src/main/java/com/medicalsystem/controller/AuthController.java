@@ -16,10 +16,13 @@ import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.web.context.HttpSessionSecurityContextRepository;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+
+import java.util.Collection;
 
 @RestController
 @RequestMapping("/api/auth")
@@ -61,14 +64,16 @@ public class AuthController {
                     .findFirst()
                     .orElse("ROLE_PATIENT");
 
-            return ResponseEntity.ok(new LoginResponse(session.getId(), role));
+                Long userId = resolveUserId(authentication.getName(), authentication.getAuthorities());
+
+                return ResponseEntity.ok(new LoginResponse(session.getId(), role, userId));
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(new AdminController.Message("ERROR", "Invalid email or password"));
         }
     }
 
-    @org.springframework.web.bind.annotation.GetMapping("/me")
+            @GetMapping("/me")
     public ResponseEntity<?> currentUser(Authentication authentication) {
         if (authentication == null || !authentication.isAuthenticated()) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
@@ -80,7 +85,23 @@ public class AuthController {
                 .findFirst()
                 .orElse("ROLE_PATIENT");
 
-        return ResponseEntity.ok(new SessionResponse(role));
+        Long userId = resolveUserId(authentication.getName(), authentication.getAuthorities());
+
+        return ResponseEntity.ok(new SessionResponse(role, userId));
+    }
+
+    private Long resolveUserId(String email, Collection<? extends GrantedAuthority> authorities) {
+        boolean isPatient = authorities.stream().anyMatch(a -> "ROLE_PATIENT".equals(a.getAuthority()));
+        if (isPatient) {
+            return patientService.findByEmail(email).map(Patient::getId).orElse(null);
+        }
+
+        boolean isDoctor = authorities.stream().anyMatch(a -> "ROLE_DOCTOR".equals(a.getAuthority()));
+        if (isDoctor) {
+            return doctorService.findByEmail(email).map(Doctor::getId).orElse(null);
+        }
+
+        return null;
     }
 
     @PostMapping("/register/patient")
@@ -149,10 +170,12 @@ public class AuthController {
     public static class LoginResponse {
         private final String token;
         private final String role;
+        private final Long userId;
 
-        public LoginResponse(String token, String role) {
+        public LoginResponse(String token, String role, Long userId) {
             this.token = token;
             this.role = role;
+            this.userId = userId;
         }
 
         public String getToken() {
@@ -162,17 +185,27 @@ public class AuthController {
         public String getRole() {
             return role;
         }
+
+        public Long getUserId() {
+            return userId;
+        }
     }
 
     public static class SessionResponse {
         private final String role;
+        private final Long userId;
 
-        public SessionResponse(String role) {
+        public SessionResponse(String role, Long userId) {
             this.role = role;
+            this.userId = userId;
         }
 
         public String getRole() {
             return role;
+        }
+
+        public Long getUserId() {
+            return userId;
         }
     }
 }

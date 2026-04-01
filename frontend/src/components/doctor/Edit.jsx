@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { User, Edit } from 'lucide-react';
+import { Edit } from 'lucide-react';
 import api from '../../services/api';
+import { resolveUserId } from '../../utils/sessionUser';
 
 const EditDoctorProfile = () => {
     const [formData, setFormData] = useState({
@@ -13,14 +14,16 @@ const EditDoctorProfile = () => {
     const [categories, setCategories] = useState([]);
     const [message, setMessage] = useState('');
     const [loading, setLoading] = useState(true);
-    // Hardcoded doctor ID for now
-    const doctorId = 1;
+    const [doctorId, setDoctorId] = useState(null);
 
     useEffect(() => {
         const fetchDoctor = async () => {
             try {
+                const resolvedDoctorId = await resolveUserId('ROLE_DOCTOR');
+                setDoctorId(resolvedDoctorId);
+
                 const [doctorResponse, categoryResponse] = await Promise.all([
-                    api.get(`/doctors/${doctorId}`),
+                    api.get(`/doctors/${resolvedDoctorId}`),
                     api.get('/doctor-categories')
                 ]);
                 setFormData(doctorResponse.data);
@@ -33,7 +36,7 @@ const EditDoctorProfile = () => {
         };
 
         fetchDoctor();
-    }, [doctorId]);
+    }, []);
 
     const handleChange = (e) => {
         setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -41,6 +44,11 @@ const EditDoctorProfile = () => {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
+        if (!doctorId) {
+            setMessage('Unable to identify doctor account. Please login again.');
+            return;
+        }
+
         try {
             await api.put(`/doctors/${doctorId}`, formData);
             setMessage('Profile updated successfully!');

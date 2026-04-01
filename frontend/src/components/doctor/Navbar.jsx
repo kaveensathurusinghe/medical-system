@@ -1,10 +1,12 @@
 import React from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
-import { CalendarClock, LayoutDashboard, PencilLine } from 'lucide-react';
+import { CalendarClock, FileText, LayoutDashboard, PencilLine, Timer } from 'lucide-react';
 import api from '../../services/api';
 
 const links = [
   { to: '/doctor/dashboard', label: 'Dashboard', icon: LayoutDashboard },
+  { to: '/timeslots/doctor', label: 'Timeslots', icon: Timer },
+  { to: '/records/medical-records', label: 'Records', icon: FileText },
   { to: '/doctor/appointments-history', label: 'History', icon: CalendarClock },
   { to: '/doctor/edit', label: 'Profile', icon: PencilLine },
 ];
@@ -20,6 +22,7 @@ const Navbar = () => {
     } finally {
       localStorage.removeItem('token');
       localStorage.removeItem('role');
+      localStorage.removeItem('userId');
       navigate('/');
     }
   };

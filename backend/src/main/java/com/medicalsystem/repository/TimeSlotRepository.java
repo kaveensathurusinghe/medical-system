@@ -10,4 +10,11 @@ import java.util.List;
 public interface TimeSlotRepository extends MongoRepository<TimeSlot, Long> {
     List<TimeSlot> findByDoctorIdAndIsAvailable(Long doctorId, boolean isAvailable);
     List<TimeSlot> findByDoctorId(Long doctorId);
+    List<TimeSlot> findByDoctorIdAndIsAvailableOrderByStartTimeAsc(Long doctorId, boolean isAvailable);
+    List<TimeSlot> findByDoctorIdOrderByStartTimeAsc(Long doctorId);
+    List<TimeSlot> findByDoctorIdAndStartTimeLessThanAndEndTimeGreaterThan(
+            Long doctorId,
+            java.time.LocalDateTime endExclusive,
+            java.time.LocalDateTime startExclusive
+    );
 }

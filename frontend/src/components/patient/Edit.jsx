@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
 import { motion } from 'framer-motion';
-import { User, Edit } from 'lucide-react';
+import { Edit } from 'lucide-react';
+import api from '../../services/api';
+import { resolveUserId } from '../../utils/sessionUser';
 
 const EditPatientProfile = () => {
     const [formData, setFormData] = useState({
@@ -14,13 +15,15 @@ const EditPatientProfile = () => {
     });
     const [message, setMessage] = useState('');
     const [loading, setLoading] = useState(true);
-    // Hardcoded patient ID for now
-    const patientId = 1;
+    const [patientId, setPatientId] = useState(null);
 
     useEffect(() => {
         const fetchPatient = async () => {
             try {
-                const response = await axios.get(`/api/patients/${patientId}`);
+                const resolvedPatientId = await resolveUserId('ROLE_PATIENT');
+                setPatientId(resolvedPatientId);
+
+                const response = await api.get(`/patients/${resolvedPatientId}`);
                 setFormData(response.data);
                 setLoading(false);
             } catch (error) {
@@ -30,7 +33,7 @@ const EditPatientProfile = () => {
         };
 
         fetchPatient();
-    }, [patientId]);
+    }, []);
 
     const handleChange = (e) => {
         setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -38,8 +41,13 @@ const EditPatientProfile = () => {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
+        if (!patientId) {
+            setMessage('Unable to identify patient account. Please login again.');
+            return;
+        }
+
         try {
-            await axios.put(`/api/patients/${patientId}`, formData);
+            await api.put(`/patients/${patientId}`, formData);
             setMessage('Profile updated successfully!');
         } catch (error) {
             console.error("Error updating profile:", error);

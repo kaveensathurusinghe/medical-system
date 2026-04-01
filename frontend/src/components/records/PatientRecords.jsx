@@ -1,29 +1,31 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
-import { useParams, Link } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { FileText, User } from 'lucide-react';
+import api from '../../services/api';
+import { resolveUserId } from '../../utils/sessionUser';
 
 const PatientRecords = () => {
     const [records, setRecords] = useState([]);
     const [loading, setLoading] = useState(true);
-    const { patientId } = useParams(); // Assuming patient ID is in the URL
+    const [error, setError] = useState('');
 
     useEffect(() => {
         const fetchRecords = async () => {
             try {
-                // Hardcoded patient ID for now, will be replaced with dynamic ID
-                const response = await axios.get(`/api/records/patient/1`);
+                const patientId = await resolveUserId('ROLE_PATIENT');
+                const response = await api.get(`/records/patient/${patientId}`);
                 setRecords(response.data);
                 setLoading(false);
-            } catch (error) {
-                console.error("Error fetching patient records:", error);
+            } catch (fetchError) {
+                setError('Error fetching your medical records.');
+                console.error("Error fetching patient records:", fetchError);
                 setLoading(false);
             }
         };
 
         fetchRecords();
-    }, [patientId]);
+    }, []);
 
     const containerVariants = {
         hidden: { opacity: 0 },
@@ -57,6 +59,8 @@ const PatientRecords = () => {
                 <User className="w-10 h-10 mr-4 text-blue-600" />
                 <h1 className="text-4xl font-bold text-gray-800">Patient Medical Records</h1>
             </div>
+
+            {error && <p className="mb-4 rounded-lg bg-red-50 px-4 py-3 text-sm text-red-700">{error}</p>}
 
             <motion.div
                 className="bg-white shadow-2xl rounded-lg overflow-hidden"

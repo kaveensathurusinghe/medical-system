@@ -4,10 +4,13 @@ import com.medicalsystem.dto.AppointmentDTO;
 import com.medicalsystem.dto.DoctorDashboardStats;
 import com.medicalsystem.model.Doctor;
 import com.medicalsystem.service.AppointmentService;
+import com.medicalsystem.service.AuthorizationService;
 import com.medicalsystem.service.DoctorService;
 import com.medicalsystem.service.PatientService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -24,6 +27,9 @@ public class DoctorController {
 
     @Autowired
     private PatientService patientService;
+
+    @Autowired
+    private AuthorizationService authorizationService;
 
     @GetMapping
     public ResponseEntity<List<Doctor>> getAllDoctors() {
@@ -47,7 +53,14 @@ public class DoctorController {
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<?> updateDoctor(@PathVariable Long id, @RequestBody Doctor doctorDetails) {
+    public ResponseEntity<?> updateDoctor(@PathVariable Long id,
+                                          @RequestBody Doctor doctorDetails,
+                                          Authentication authentication) {
+        if (!authorizationService.canAccessDoctor(authentication, id)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(new AdminController.Message("ERROR", "You can only update your own doctor profile"));
+        }
+
         Doctor doctor = doctorService.getDoctorById(id).orElse(null);
         if (doctor == null) {
             return ResponseEntity.notFound().build();
@@ -65,14 +78,26 @@ public class DoctorController {
     }
 
     @GetMapping("/{id}/dashboard-stats")
-    public ResponseEntity<DoctorDashboardStats> getDashboardStats(@PathVariable Long id) {
+    public ResponseEntity<?> getDashboardStats(@PathVariable Long id,
+                                               Authentication authentication) {
+        if (!authorizationService.canAccessDoctor(authentication, id)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(new AdminController.Message("ERROR", "You can only view your own dashboard"));
+        }
+
         DoctorDashboardStats stats = doctorService.getDashboardStats(id);
         return ResponseEntity.ok(stats);
     }
 
     @GetMapping("/{id}/appointments")
-    public ResponseEntity<List<AppointmentDTO>> getDoctorAppointments(@PathVariable Long id,
-                                                                      @RequestParam(required = false) Integer limit) {
+    public ResponseEntity<?> getDoctorAppointments(@PathVariable Long id,
+                                                   @RequestParam(required = false) Integer limit,
+                                                   Authentication authentication) {
+        if (!authorizationService.canAccessDoctor(authentication, id)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(new AdminController.Message("ERROR", "You can only view your own appointments"));
+        }
+
         List<AppointmentDTO> appointments = appointmentService.getAppointmentsByDoctorId(id);
         if (limit != null && limit > 0 && limit < appointments.size()) {
             appointments = appointments.subList(0, limit);
@@ -91,7 +116,14 @@ public class DoctorController {
     }
 
     @PostMapping("/{id}/change-password")
-    public ResponseEntity<?> changePassword(@PathVariable Long id, @RequestBody ChangePasswordRequest request) {
+    public ResponseEntity<?> changePassword(@PathVariable Long id,
+                                            @RequestBody ChangePasswordRequest request,
+                                            Authentication authentication) {
+        if (!authorizationService.canAccessDoctor(authentication, id)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(new AdminController.Message("ERROR", "You can only change your own password"));
+        }
+
         try {
             doctorService.updatePassword(id, request.getNewPassword());
             return ResponseEntity.ok(new AdminController.Message("SUCCESS", "Password changed successfully"));

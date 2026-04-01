@@ -38,6 +38,7 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.PUT, "/api/doctors/**")
                     .hasAnyRole("DOCTOR", "ADMIN")
 
+                .requestMatchers(HttpMethod.GET, "/api/patients").hasRole("ADMIN")
                 .requestMatchers(HttpMethod.POST, "/api/patients/register").permitAll()
                 .requestMatchers("/api/patients/**").hasAnyRole("PATIENT", "ADMIN")
 
@@ -45,7 +46,8 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.DELETE, "/api/appointments/**").hasRole("ADMIN")
                 .requestMatchers("/api/appointments/**").hasAnyRole("PATIENT", "DOCTOR", "ADMIN")
 
-                .requestMatchers(HttpMethod.GET, "/api/timeslots/**").hasAnyRole("PATIENT", "DOCTOR", "ADMIN")
+                .requestMatchers(HttpMethod.GET, "/api/timeslots/doctor/*/available").hasAnyRole("PATIENT", "DOCTOR", "ADMIN")
+                .requestMatchers(HttpMethod.GET, "/api/timeslots/**").hasAnyRole("DOCTOR", "ADMIN")
                 .requestMatchers(HttpMethod.POST, "/api/timeslots/**").hasAnyRole("DOCTOR", "ADMIN")
                 .requestMatchers(HttpMethod.PUT, "/api/timeslots/**").hasAnyRole("DOCTOR", "ADMIN")
                 .requestMatchers(HttpMethod.DELETE, "/api/timeslots/**").hasAnyRole("DOCTOR", "ADMIN")

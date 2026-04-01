@@ -1,22 +1,24 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
 import { useParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { FileText, User, Stethoscope, Calendar, Pill } from 'lucide-react';
+import api from '../../services/api';
 
 const ViewRecord = () => {
     const [record, setRecord] = useState(null);
     const [loading, setLoading] = useState(true);
+    const [error, setError] = useState('');
     const { recordId } = useParams();
 
     useEffect(() => {
         const fetchRecord = async () => {
             try {
-                const response = await axios.get(`/api/records/${recordId}`);
+                const response = await api.get(`/records/${recordId}`);
                 setRecord(response.data);
                 setLoading(false);
-            } catch (error) {
-                console.error("Error fetching medical record:", error);
+            } catch (fetchError) {
+                setError('Unable to load this medical record.');
+                console.error("Error fetching medical record:", fetchError);
                 setLoading(false);
             }
         };
@@ -37,7 +39,7 @@ const ViewRecord = () => {
 
     if (!record) {
         return <div className="text-center py-12 text-gray-500">
-            <p>Medical record not found.</p>
+            <p>{error || 'Medical record not found.'}</p>
         </div>;
     }
 
