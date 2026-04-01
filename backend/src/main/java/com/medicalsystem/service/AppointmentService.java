@@ -30,6 +30,9 @@ public class AppointmentService {
     @Autowired
     private PatientService patientService;
 
+    @Autowired
+    private SequenceGeneratorService sequenceGeneratorService;
+
     public AppointmentService(AppointmentRepository appointmentRepository, TimeSlotService timeSlotService) {
         this.appointmentRepository = appointmentRepository;
         this.timeSlotService = timeSlotService;
@@ -49,6 +52,7 @@ public class AppointmentService {
         }
 
         Appointment appointment = new Appointment();
+          appointment.setId(sequenceGeneratorService.generateSequence("appointment_seq"));
         appointment.setPatientId(patientId);
         appointment.setDoctorId(doctorId);
         appointment.setAppointmentTime(timeSlot.getStartTime());
@@ -88,6 +92,13 @@ public class AppointmentService {
         return appointmentRepository.save(updatedAppointment);
     }
 
+    public Appointment saveAppointment(Appointment appointment) {
+        if (appointment.getId() == null) {
+            appointment.setId(sequenceGeneratorService.generateSequence("appointment_seq"));
+        }
+        return appointmentRepository.save(appointment);
+    }
+
     public void deleteAppointment(Long id) {
         appointmentRepository.deleteById(id);
     }
@@ -97,7 +108,7 @@ public class AppointmentService {
         if (optionalAppointment.isPresent()) {
             Appointment appointment = optionalAppointment.get();
             appointment.setAppointmentTime(newTime);
-            return appointmentRepository.save(appointment);
+            return saveAppointment(appointment);
         }
         return null;
     }

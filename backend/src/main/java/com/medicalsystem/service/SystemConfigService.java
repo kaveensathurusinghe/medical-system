@@ -6,6 +6,8 @@ import org.springframework.stereotype.Service;
 
 @Service
 public class SystemConfigService {
+    private static final String CONFIG_ID = "system-config";
+
     private final SystemConfigRepository configRepository;
 
     public SystemConfigService(SystemConfigRepository configRepository) {
@@ -13,12 +15,17 @@ public class SystemConfigService {
     }
 
     public SystemConfig getConfig() {
-        return configRepository.getConfig();
+        return configRepository.findById(CONFIG_ID)
+                .orElseGet(() -> {
+                    SystemConfig config = new SystemConfig();
+                    config.setId(CONFIG_ID);
+                    return configRepository.save(config);
+                });
     }
 
     public void updateAppointmentFee(double fee) {
-        SystemConfig config = configRepository.getConfig();
+        SystemConfig config = getConfig();
         config.setAppointmentFee(fee);
-        configRepository.saveConfig(config);
+        configRepository.save(config);
     }
 }

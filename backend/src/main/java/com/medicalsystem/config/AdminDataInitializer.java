@@ -2,6 +2,7 @@ package com.medicalsystem.config;
 
 import com.medicalsystem.model.Admin;
 import com.medicalsystem.repository.AdminRepository;
+import com.medicalsystem.service.SequenceGeneratorService;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -12,6 +13,7 @@ public class AdminDataInitializer implements CommandLineRunner {
 
     private final AdminRepository adminRepository;
     private final PasswordEncoder passwordEncoder;
+    private final SequenceGeneratorService sequenceGeneratorService;
 
     @Value("${app.admin.name:System Administrator}")
     private String adminName;
@@ -22,9 +24,12 @@ public class AdminDataInitializer implements CommandLineRunner {
     @Value("${app.admin.password:Admin@123}")
     private String adminPassword;
 
-    public AdminDataInitializer(AdminRepository adminRepository, PasswordEncoder passwordEncoder) {
+    public AdminDataInitializer(AdminRepository adminRepository,
+                                PasswordEncoder passwordEncoder,
+                                SequenceGeneratorService sequenceGeneratorService) {
         this.adminRepository = adminRepository;
         this.passwordEncoder = passwordEncoder;
+        this.sequenceGeneratorService = sequenceGeneratorService;
     }
 
     @Override
@@ -34,6 +39,7 @@ public class AdminDataInitializer implements CommandLineRunner {
         }
 
         Admin admin = new Admin();
+        admin.setId(sequenceGeneratorService.generateSequence("admin_seq"));
         admin.setName(adminName);
         admin.setEmail(adminEmail);
         admin.setPassword(passwordEncoder.encode(adminPassword));

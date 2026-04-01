@@ -68,6 +68,21 @@ public class AuthController {
         }
     }
 
+    @org.springframework.web.bind.annotation.GetMapping("/me")
+    public ResponseEntity<?> currentUser(Authentication authentication) {
+        if (authentication == null || !authentication.isAuthenticated()) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(new AdminController.Message("ERROR", "Not authenticated"));
+        }
+
+        String role = authentication.getAuthorities().stream()
+                .map(GrantedAuthority::getAuthority)
+                .findFirst()
+                .orElse("ROLE_PATIENT");
+
+        return ResponseEntity.ok(new SessionResponse(role));
+    }
+
     @PostMapping("/register/patient")
     public ResponseEntity<?> registerPatient(@RequestBody Patient patient) {
         try {
@@ -142,6 +157,18 @@ public class AuthController {
 
         public String getToken() {
             return token;
+        }
+
+        public String getRole() {
+            return role;
+        }
+    }
+
+    public static class SessionResponse {
+        private final String role;
+
+        public SessionResponse(String role) {
+            this.role = role;
         }
 
         public String getRole() {

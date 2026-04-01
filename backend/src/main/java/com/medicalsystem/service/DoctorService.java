@@ -30,9 +30,13 @@ public class DoctorService {
     @Autowired
     private DoctorCategoryService doctorCategoryService;
 
+    @Autowired
+    private SequenceGeneratorService sequenceGeneratorService;
+
     public Doctor registerDoctor(String name, String email, String rawPassword,
                                  String phone, String specialization) {
         Doctor doctor = new Doctor();
+        doctor.setId(sequenceGeneratorService.generateSequence("doctor_seq"));
         doctor.setName(name);
         doctor.setEmail(email);
         doctor.setPhone(phone);
@@ -50,6 +54,9 @@ public class DoctorService {
     }
 
     public Doctor saveDoctor(Doctor doctor) {
+        if (doctor.getId() == null) {
+            doctor.setId(sequenceGeneratorService.generateSequence("doctor_seq"));
+        }
         doctor.setSpecialization(doctorCategoryService.resolveValidCategoryName(doctor.getSpecialization()));
         return doctorRepository.save(doctor);
     }

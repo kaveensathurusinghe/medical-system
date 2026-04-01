@@ -23,12 +23,16 @@ public class PatientService {
     @Autowired
     private PasswordEncoder passwordEncoder;
 
+    @Autowired
+    private SequenceGeneratorService sequenceGeneratorService;
+
     /**
      * Register a new patient using the JPA-backed Patient entity.
      */
     public Patient registerPatient(String name, String email, String rawPassword,
                                    String phone, int age, String gender) {
         Patient patient = new Patient();
+        patient.setId(sequenceGeneratorService.generateSequence("patient_seq"));
         patient.setName(name);
         patient.setEmail(email);
         patient.setPhone(phone);
@@ -47,6 +51,9 @@ public class PatientService {
     }
 
     public Patient savePatient(Patient patient) {
+        if (patient.getId() == null) {
+            patient.setId(sequenceGeneratorService.generateSequence("patient_seq"));
+        }
         return patientRepository.save(patient);
     }
 

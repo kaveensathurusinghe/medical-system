@@ -14,7 +14,13 @@ public class MedicalRecordService {
     @Autowired
     private MedicalRecordRepository medicalRecordRepository;
 
+    @Autowired
+    private SequenceGeneratorService sequenceGeneratorService;
+
     public MedicalRecord createRecord(MedicalRecord medicalRecord) {
+        if (medicalRecord.getId() == null) {
+            medicalRecord.setId(sequenceGeneratorService.generateSequence("medical_record_seq"));
+        }
         return medicalRecordRepository.save(medicalRecord);
     }
 

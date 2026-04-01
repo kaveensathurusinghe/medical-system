@@ -17,6 +17,9 @@ public class DoctorCategoryService {
     @Autowired
     private DoctorRepository doctorRepository;
 
+    @Autowired
+    private SequenceGeneratorService sequenceGeneratorService;
+
     public List<DoctorCategory> getAllCategories() {
         return doctorCategoryRepository.findAllByOrderByNameAsc();
     }
@@ -31,6 +34,7 @@ public class DoctorCategoryService {
         }
 
         DoctorCategory category = new DoctorCategory();
+        category.setId(sequenceGeneratorService.generateSequence("doctor_category_seq"));
         category.setName(normalizedName);
         return doctorCategoryRepository.save(category);
     }

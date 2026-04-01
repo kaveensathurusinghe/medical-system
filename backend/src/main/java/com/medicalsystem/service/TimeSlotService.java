@@ -15,8 +15,12 @@ public class TimeSlotService {
     @Autowired
     private TimeSlotRepository timeSlotRepository;
 
+    @Autowired
+    private SequenceGeneratorService sequenceGeneratorService;
+
     public TimeSlot createTimeSlot(Long doctorId, LocalDateTime startTime, LocalDateTime endTime) {
         TimeSlot timeSlot = new TimeSlot();
+        timeSlot.setId(sequenceGeneratorService.generateSequence("timeslot_seq"));
         timeSlot.setDoctorId(doctorId);
         timeSlot.setStartTime(startTime);
         timeSlot.setEndTime(endTime);

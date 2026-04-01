@@ -3,6 +3,7 @@ package com.medicalsystem.config;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -21,27 +22,52 @@ public class SecurityConfig {
         http
                 .csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests(auth -> auth
-                .requestMatchers("/api/auth/**").permitAll()
-                .requestMatchers("/api/doctor-categories").permitAll()
+                .requestMatchers("/api/auth/login", "/api/auth/register/**", "/api/auth/logout").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/doctor-categories").permitAll()
+
                 .requestMatchers("/api/admin/**").hasRole("ADMIN")
-                .requestMatchers("/api/**").permitAll()
+
+                .requestMatchers(HttpMethod.POST, "/api/doctors/register").hasRole("ADMIN")
+                .requestMatchers(HttpMethod.DELETE, "/api/doctors/**").hasRole("ADMIN")
+                .requestMatchers(HttpMethod.GET, "/api/doctors/*/dashboard-stats", "/api/doctors/*/appointments")
+                    .hasAnyRole("DOCTOR", "ADMIN")
+                .requestMatchers(HttpMethod.POST, "/api/doctors/*/change-password")
+                    .hasAnyRole("DOCTOR", "ADMIN")
+                .requestMatchers(HttpMethod.GET, "/api/doctors/**")
+                    .hasAnyRole("PATIENT", "DOCTOR", "ADMIN")
+                .requestMatchers(HttpMethod.PUT, "/api/doctors/**")
+                    .hasAnyRole("DOCTOR", "ADMIN")
+
+                .requestMatchers(HttpMethod.POST, "/api/patients/register").permitAll()
+                .requestMatchers("/api/patients/**").hasAnyRole("PATIENT", "ADMIN")
+
+                .requestMatchers(HttpMethod.POST, "/api/appointments/book").hasRole("PATIENT")
+                .requestMatchers(HttpMethod.DELETE, "/api/appointments/**").hasRole("ADMIN")
+                .requestMatchers("/api/appointments/**").hasAnyRole("PATIENT", "DOCTOR", "ADMIN")
+
+                .requestMatchers(HttpMethod.GET, "/api/timeslots/**").hasAnyRole("PATIENT", "DOCTOR", "ADMIN")
+                .requestMatchers(HttpMethod.POST, "/api/timeslots/**").hasAnyRole("DOCTOR", "ADMIN")
+                .requestMatchers(HttpMethod.PUT, "/api/timeslots/**").hasAnyRole("DOCTOR", "ADMIN")
+                .requestMatchers(HttpMethod.DELETE, "/api/timeslots/**").hasAnyRole("DOCTOR", "ADMIN")
+
+                .requestMatchers("/api/payments/**").hasAnyRole("PATIENT", "ADMIN")
+                .requestMatchers(HttpMethod.POST, "/api/records/**").hasAnyRole("DOCTOR", "ADMIN")
+                .requestMatchers(HttpMethod.GET, "/api/records/**").hasAnyRole("PATIENT", "DOCTOR", "ADMIN")
+
                 .requestMatchers("/", "/register/**", "/login", "/css/**", "/js/**", "/images/**").permitAll()
-                .requestMatchers("/admin/**").hasRole("ADMIN")
-                .requestMatchers("/patients/**").hasRole("PATIENT")
-                .requestMatchers("/doctors/**").hasRole("DOCTOR")
                 .anyRequest().authenticated()
                 )
                 .exceptionHandling(ex -> ex
-                    .authenticationEntryPoint((request, response, authException) ->
-                        response.sendError(HttpStatus.UNAUTHORIZED.value(), "Unauthorized"))
-                    .accessDeniedHandler((request, response, accessDeniedException) ->
-                        response.sendError(HttpStatus.FORBIDDEN.value(), "Forbidden"))
+                .authenticationEntryPoint((request, response, authException) ->
+                    response.sendError(HttpStatus.UNAUTHORIZED.value(), "Unauthorized"))
+                .accessDeniedHandler((request, response, accessDeniedException) ->
+                    response.sendError(HttpStatus.FORBIDDEN.value(), "Forbidden"))
                 )
             .formLogin(AbstractHttpConfigurer::disable)
                 .logout(logout -> logout
                 .logoutUrl("/api/auth/logout")
                 .logoutSuccessHandler((request, response, authentication) -> response.setStatus(HttpStatus.OK.value()))
-                        .permitAll()
+                .permitAll()
                 );
 
         return http.build();

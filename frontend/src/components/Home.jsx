@@ -78,11 +78,11 @@ const Home = () => {
               <ShieldCheck className="mb-2 text-cyan-700" size={20} />
               <p className="text-sm font-semibold text-slate-900">Admin</p>
             </Link>
-            <Link to="/doctor/dashboard" className="surface-card rounded-2xl p-4 transition hover:-translate-y-0.5">
+            <Link to="/login" className="surface-card rounded-2xl p-4 transition hover:-translate-y-0.5">
               <Stethoscope className="mb-2 text-cyan-700" size={20} />
               <p className="text-sm font-semibold text-slate-900">Doctor</p>
             </Link>
-            <Link to="/patient/dashboard" className="surface-card rounded-2xl p-4 transition hover:-translate-y-0.5">
+            <Link to="/login" className="surface-card rounded-2xl p-4 transition hover:-translate-y-0.5">
               <HeartPulse className="mb-2 text-cyan-700" size={20} />
               <p className="text-sm font-semibold text-slate-900">Patient</p>
             </Link>

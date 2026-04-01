@@ -1,14 +1,15 @@
 package com.medicalsystem.model;
 
-import jakarta.persistence.*;
+import org.springframework.data.annotation.Id;
+import org.springframework.data.mongodb.core.mapping.Document;
+
 import java.time.LocalDate;
 import java.util.List;
 
-@Entity
+@Document(collection = "patients")
 public class Patient {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
     private String name;
     private LocalDate dateOfBirth;
@@ -19,7 +20,6 @@ public class Patient {
     private Integer age;
     private String password;
 
-    @OneToMany(mappedBy = "patientId")
     private List<Appointment> appointments;
 
     public Long getId() {

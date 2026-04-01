@@ -6,6 +6,8 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Service
 public class PaymentService {
@@ -27,6 +29,8 @@ public class PaymentService {
         payment.setCardHolderName(cardHolderName);
         payment.setExpiryDate(expiryDate);
         payment.setCvv(cvv);
+        payment.setPaymentId("PAY-" + UUID.randomUUID().toString().substring(0, 8));
+        payment.setPaymentDate(LocalDateTime.now());
         payment.setStatus("COMPLETED");
 
         return paymentRepository.save(payment);
@@ -41,11 +45,15 @@ public class PaymentService {
     }
 
     public double getTotal(){
-        return paymentRepository.calculateTotalPayments();
+        return paymentRepository.findAll().stream()
+                .mapToDouble(Payment::getAmount)
+                .sum();
     }
 
     public List<Payment> getRecentPayments(int limit) {
-        return paymentRepository.findRecentPayments(limit);
+        return paymentRepository.findAllByOrderByPaymentDateDesc().stream()
+                .limit(limit)
+                .collect(Collectors.toList());
     }
 
     public List<Payment> getAllPayments() {
