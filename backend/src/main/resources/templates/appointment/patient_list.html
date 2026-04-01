@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Appointments</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body::before {
+            content: "";
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: url('/images/background.jpg');
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
+            filter: blur(5px);
+            z-index: -1;
+        }
+        .appointment-card {
+            border: 1px solid #e0e0e0;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+            background-color: white;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+        }
+        .urgency-badge {
+            font-size: 0.8rem;
+            padding: 5px 10px;
+            border-radius: 20px;
+        }
+        .status-badge {
+            font-size: 0.8rem;
+            padding: 5px 10px;
+            border-radius: 20px;
+        }
+    </style>
+</head>
+<body>
+<div th:replace="~{patient/navbar :: navbar('appointments', ${patient})}"></div>
+
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>My Appointments</h2>
+        <a th:href="@{/patients/dashboard}" class="btn btn-outline-primary">
+            <i class="fas fa-arrow-left me-1"></i> Back to Doctors
+        </a>
+    </div>
+
+    <!-- Success/Error Messages -->
+    <div th:if="${successMessage}" class="alert alert-success alert-dismissible fade show" role="alert">
+        <span th:text="${successMessage}"></span>
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+    <div th:if="${errorMessage}" class="alert alert-danger alert-dismissible fade show" role="alert">
+        <span th:text="${errorMessage}"></span>
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+
+    <div class="row">
+        <div class="col-md-8 mx-auto">
+            <div th:if="${appointments.isEmpty()}" class="text-center py-5">
+                <i class="fas fa-calendar-times fa-3x text-muted mb-3"></i>
+                <h4 class="text-muted">No appointments found</h4>
+                <p class="text-muted">You haven't booked any appointments yet.</p>
+                <a th:href="@{/patients/dashboard}" class="btn btn-primary">
+                    Book an Appointment
+                </a>
+            </div>
+
+            <div th:each="appointment : ${appointments}"
+                 th:if="${appointment.status != 'COMPLETED'}"
+                 class="appointment-card">
+                <div class="d-flex justify-content-between align-items-start mb-2">
+                    <h5 th:text="'Appointment with Dr. ' + ${appointment.doctorName}"></h5>
+                    <div>
+                        <span th:class="${appointment.urgencyLevel == 5} ? 'bg-danger' :
+                                      (${appointment.urgencyLevel == 4} ? 'bg-warning' :
+                                      (${appointment.urgencyLevel == 3} ? 'bg-info' :
+                                      (${appointment.urgencyLevel == 2} ? 'bg-primary' : 'bg-secondary')))"
+                              class="urgency-badge text-white">
+                            Urgency: <span th:text="${appointment.urgencyLevel}"></span>/5
+                        </span>
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <span th:class="${appointment.status == 'SCHEDULED'} ? 'bg-primary' :
+                                  (${appointment.status == 'COMPLETED'} ? 'bg-success' : 'bg-secondary')"
+                          class="status-badge text-white">
+                        <span th:text="${appointment.status}"></span>
+                    </span>
+                </div>
+
+                <div class="mb-3">
+                    <p><strong>Date & Time:</strong>
+                        <span th:text="${#temporals.format(appointment.appointmentTime, 'MMMM dd, yyyy hh:mm a')}"></span>
+                    </p>
+                    <p><strong>Reason:</strong> <span th:text="${appointment.reason}"></span></p>
+                </div>
+
+                <div class="d-flex gap-2">
+                    <a th:if="${appointment.status != 'CANCELLED'}"
+                       th:href="@{'/appointments/reschedule/' + ${appointment.appointmentId}}"
+                       class="btn btn-outline-primary btn-sm">
+                        <i class="fas fa-calendar-alt me-1"></i> Reschedule
+                    </a>
+                    <a th:if="${appointment.status != 'CANCELLED'}"
+                       th:href="@{'/appointments/cancel/' + ${appointment.appointmentId}}"
+                       class="btn btn-outline-danger btn-sm">
+                        <i class="fas fa-times me-1"></i> Cancel
+                    </a>
+                    <a th:if="${appointment.status == 'CANCELLED'}"
+                       th:href="@{'/appointments/delete/' + ${appointment.appointmentId}}"
+                       class="btn btn-outline-danger btn-sm">
+                        <i class="fas fa-trash me-1"></i> Delete
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

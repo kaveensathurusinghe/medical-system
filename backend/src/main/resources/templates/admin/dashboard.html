@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Admin Dashboard</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body::before {
+            content: "";
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: url('/images/background.jpg');
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
+            filter: blur(5px);
+            z-index: -1;
+        }
+        .stat-card {
+            transition: all 0.3s ease;
+            border-left: 5px solid;
+        }
+        .stat-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+        }
+        .stat-icon {
+            font-size: 2rem;
+            opacity: 0.7;
+        }
+        .patients-card {
+            border-left-color: #0d6efd;
+        }
+        .doctors-card {
+            border-left-color: #198754;
+        }
+        .appointments-card {
+            border-left-color: #0dcaf0;
+        }
+        .payments-card {
+            border-left-color: #ffc107;
+        }
+        .recent-table {
+            max-height: 300px;
+            overflow-y: auto;
+        }
+    </style>
+</head>
+<body>
+<div th:replace="~{admin/navbar :: navbar('dashboard')}"></div>
+
+<div class="container py-4">
+
+    <div class="row mb-4">
+        <div class="col-md-3 mb-3">
+            <div class="card stat-card patients-card h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h6 class="text-muted">Total Patients</h6>
+                            <h3 th:text="${patientCount}">0</h3>
+                            <small class="text-muted">Registered</small>
+                        </div>
+                        <div class="stat-icon text-primary">
+                            <i class="fas fa-user-injured"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-3 mb-3">
+            <div class="card stat-card doctors-card h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h6 class="text-muted">Total Doctors</h6>
+                            <h3 th:text="${doctorCount}">0</h3>
+                            <small class="text-muted">Active</small>
+                        </div>
+                        <div class="stat-icon text-success">
+                            <i class="fas fa-user-md"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-3 mb-3">
+            <div class="card stat-card appointments-card h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h6 class="text-muted">Total Appointments</h6>
+                            <h3 th:text="${appointmentCount}">0</h3>
+                            <small class="text-muted">All Time</small>
+                        </div>
+                        <div class="stat-icon text-info">
+                            <i class="fas fa-calendar-alt"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-3 mb-3">
+            <div class="card stat-card payments-card h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h6 class="text-muted">Total Revenue</h6>
+                            <h3 th:text="${#numbers.formatDecimal(paymentTotal, 1, 2)+ ' Lkr'}">$0.00</h3>
+                            <small class="text-muted">Collected</small>
+                        </div>
+                        <div class="stat-icon text-warning">
+                            <i class="fas fa-credit-card"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="card mb-4">
+        <div class="card-header bg-primary text-white">
+            <h5 class="mb-0"><i class="fas fa-cog me-2"></i>Consultation Fee</h5>
+        </div>
+        <div class="card-body">
+            <form th:action="@{/admin/update-fee}" method="post">
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label for="fee" class="form-label">Appointment Fee</label>
+                            <div class="input-group">
+                                <span class="input-group-text">Lkr</span>
+                                <input type="number" step="0.01" min="0" class="form-control" id="fee"
+                                       name="fee" th:value="${config.appointmentFee}" required>
+                            </div>
+                            <small class="text-muted">Set the default fee for new appointments</small>
+                        </div>
+                    </div>
+                    <div class="col-md-6 d-flex align-items-end">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save me-2"></i>Update Fee
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-6 mb-4">
+            <div class="card h-100">
+                <div class="card-header bg-info text-white d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0"><i class="fas fa-calendar-check me-2"></i>Recent Appointments</h5>
+                </div>
+                <div class="card-body p-0">
+                    <div class="recent-table">
+                        <table class="table table-hover mb-0">
+                            <thead class="table-light">
+                            <tr>
+                                <th>ID</th>
+                                <th>Patient</th>
+                                <th>Doctor</th>
+                                <th>Date</th>
+                                <th>Status</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            <tr th:each="appt : ${recentAppointments}">
+                                <td th:text="${appt.appointmentId.substring(0, 8)}">...</td>
+                                <td th:text="${appt.patientName}">...</td>
+                                <td th:text="${appt.doctorName}">Dr. ...</td>
+                                <td th:text="${#temporals.format(appt.appointmentTime, 'MMM dd, hh:mm a')}">...</td>
+                                <td>
+                                            <span th:class="${appt.status == 'COMPLETED'} ? 'badge bg-success' :
+                                                            (${appt.status == 'CANCELLED'} ? 'badge bg-danger' : 'badge bg-primary')"
+                                                  th:text="${appt.status}">Status</span>
+                                </td>
+                            </tr>
+                            <tr th:if="${#lists.isEmpty(recentAppointments)}">
+                                <td colspan="5" class="text-center text-muted">No recent appointments</td>
+                            </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6 mb-4">
+            <div class="card h-100">
+                <div class="card-header bg-success text-white d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0"><i class="fas fa-money-bill-wave me-2"></i>Recent Payments</h5>
+                </div>
+                <div class="card-body p-0">
+                    <div class="recent-table">
+                        <table class="table table-hover mb-0">
+                            <thead class="table-light">
+                            <tr>
+                                <th>ID</th>
+                                <th>Appointment</th>
+                                <th>Amount</th>
+                                <th>Date</th>
+                                <th>Method</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            <tr th:each="payment : ${recentPayments}">
+                                <td th:text="${payment.paymentId.substring(0, 8)}">...</td>
+                                <td th:text="${payment.appointmentId.substring(0, 8)}">...</td>
+                                <td th:text="${ #numbers.formatDecimal(payment.amount, 1, 2)+ ' Lkr'}">...</td>
+                                <td th:text="${#temporals.format(payment.paymentDate, 'MMM dd, yyyy')}">...</td>
+                                <td>
+                                    <span th:text="${#strings.capitalize(payment.paymentMethod.toLowerCase().replace('_', ' '))}">...</span>
+                                </td>
+                            </tr>
+                            <tr th:if="${#lists.isEmpty(recentPayments)}">
+                                <td colspan="5" class="text-center text-muted">No recent payments</td>
+                            </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

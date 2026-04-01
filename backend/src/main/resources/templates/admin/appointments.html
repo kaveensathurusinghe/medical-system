@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Appointments</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body::before {
+            content: "";
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: url('/images/background.jpg');
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
+            filter: blur(5px);
+            z-index: -1;
+        }
+        .card {
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        .status-scheduled {
+            background-color: #0d6efd;
+            color: white;
+        }
+        .status-completed {
+            background-color: #198754;
+            color: white;
+        }
+        .status-cancelled {
+            background-color: #6c757d;
+            color: white;
+        }
+        .urgency-low {
+            background-color: #198754;
+            color: white;
+        }
+        .urgency-medium {
+            background-color: #ffc107;
+            color: black;
+        }
+        .urgency-high {
+            background-color: #dc3545;
+            color: white;
+        }
+        .action-btn {
+            width: 30px;
+            height: 30px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0;
+        }
+    </style>
+</head>
+<body>
+<div th:replace="~{admin/navbar :: navbar('appointments')}"></div>
+
+<div class="container py-4">
+    <div th:if="${message}" th:class="${message.type == 'SUCCESS'} ? 'alert alert-success alert-dismissible fade show' : 'alert alert-danger alert-dismissible fade show'"
+         role="alert">
+        <span th:text="${message.content}"></span>
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+
+    <div class="card">
+        <div class="card-header bg-primary text-white">
+            <h5 class="mb-0"><i class="fas fa-calendar-alt me-2"></i>Appointments</h5>
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                    <thead class="table-light">
+                    <tr>
+                        <th>ID</th>
+                        <th>Patient</th>
+                        <th>Doctor</th>
+                        <th>Date & Time</th>
+                        <th>Reason</th>
+                        <th>Urgency</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr th:each="appointment : ${appointments}">
+                        <td th:text="${appointment.appointmentId}">APT001</td>
+                        <td th:text="${appointment.patientName}">John Doe</td>
+                        <td th:text="${appointment.doctorName}">Dr. Smith</td>
+                        <td th:text="${#temporals.format(appointment.appointmentTime, 'MMM dd, yyyy hh:mm a')}">Jan 01, 2023 10:00 AM</td>
+                        <td th:text="${appointment.reason}">Checkup</td>
+                        <td>
+                            <span th:class="${appointment.urgencyLevel == 1} ? 'badge urgency-low' :
+                                            (${appointment.urgencyLevel == 2} ? 'badge urgency-medium' : 'badge urgency-high')"
+                                  th:text="${appointment.urgencyLevel == 1} ? 'Low' :
+                                           (${appointment.urgencyLevel == 2} ? 'Medium' : 'High')">Medium</span>
+                        </td>
+                        <td>
+                            <span th:class="${appointment.status == 'SCHEDULED'} ? 'badge status-scheduled' :
+                                            (${appointment.status == 'COMPLETED'} ? 'badge status-completed' : 'badge status-cancelled')"
+                                  th:text="${appointment.status}">Scheduled</span>
+                        </td>
+                        <td>
+                            <button th:if="${appointment.status != 'COMPLETED'}"
+                                    class="btn btn-sm btn-outline-danger action-btn"
+                                    data-bs-toggle="modal"
+                                    data-bs-target="#deleteAppointmentModal"
+                                    th:attr="data-appointment-id=${appointment.appointmentId},
+                                             data-patient-name=${appointment.patientName},
+                                             data-doctor-name=${appointment.doctorName},
+                                             data-appointment-time=${#temporals.format(appointment.appointmentTime, 'MMM dd, yyyy hh:mm a')}"
+                                    title="Delete">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                            <span th:if="${appointment.status == 'COMPLETED'}" class="text-muted">Completed</span>
+                        </td>
+                    </tr>
+                    <tr th:if="${#lists.isEmpty(appointments)}">
+                        <td colspan="8" class="text-center text-muted py-4">No appointments found</td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="deleteAppointmentModal" tabindex="-1" aria-labelledby="deleteAppointmentModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title" id="deleteAppointmentModalLabel">Confirm Appointment Deletion</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>Are you sure you want to delete this appointment?</p>
+                <div class="mb-2">
+                    <strong>Patient:</strong> <span id="appointmentPatientName"></span>
+                </div>
+                <div class="mb-2">
+                    <strong>Doctor:</strong> <span id="appointmentDoctorName"></span>
+                </div>
+                <div class="mb-2">
+                    <strong>Time:</strong> <span id="appointmentTime"></span>
+                </div>
+                <p class="text-danger mt-2">This action cannot be undone.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <form id="deleteAppointmentForm" method="post">
+                    <input type="hidden" name="_csrf" th:value="${_csrf.token}"/>
+                    <button type="submit" class="btn btn-danger">
+                        <i class="fas fa-trash-alt me-1"></i> Delete
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    var deleteAppointmentModal = document.getElementById('deleteAppointmentModal')
+    deleteAppointmentModal.addEventListener('show.bs.modal', function (event) {
+        var button = event.relatedTarget
+        var appointmentId = button.getAttribute('data-appointment-id')
+        var patientName = button.getAttribute('data-patient-name')
+        var doctorName = button.getAttribute('data-doctor-name')
+        var appointmentTime = button.getAttribute('data-appointment-time')
+
+        document.getElementById('appointmentPatientName').textContent = patientName
+        document.getElementById('appointmentDoctorName').textContent = doctorName
+        document.getElementById('appointmentTime').textContent = appointmentTime
+
+        var deleteForm = document.getElementById('deleteAppointmentForm')
+        deleteForm.action = '/admin/appointments/delete/' + appointmentId
+    })
+</script>
+</body>
+</html>
