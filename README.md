@@ -1,200 +1,225 @@
-# Medical System
+# Medical System (Full-Stack)
 
-A comprehensive medical management system built with Spring Boot framework, designed to handle medical operations with security and web interface capabilities.
+A full-stack medical management web application built to demonstrate practical backend, frontend, database, and deployment skills.
 
-## Tools and Frameworks Used
+## Architecture
 
-### Backend Frameworks
-- **Spring Boot 3.4.5** - Main application framework
-- **Spring Security** - Authentication and authorization
-- **Spring Web** - RESTful web services and MVC architecture
-- **Spring Boot DevTools** - Development utilities for hot reloading
+This project uses a 3-tier architecture:
 
-### Frontend Technologies  
-- **Thymeleaf** - Server-side Java template engine
-- **Thymeleaf Spring Security Integration** - Security integration for templates
-- **HTML/CSS** - Frontend markup and styling
+1. Frontend: React (Vite) UI
+2. Backend: Spring Boot REST API
+3. Database: MongoDB
 
-### Development Tools
-- **Java 21** - Programming language
-- **Maven** - Dependency management and build tool
-- **Project Lombok** - Code generation library for reducing boilerplate
-- **Spring Boot Configuration Processor** - Configuration metadata generation
+```text
+Browser
+  -> React Frontend (Vite in dev / Nginx in Docker)
+  -> Spring Boot API (/api/*)
+  -> MongoDB
+```
 
-### Testing Framework
-- **Spring Boot Test** - Testing utilities
-- **Spring Security Test** - Security testing support
+## Tech Stack
+
+- Frontend: React, React Router, Axios, Tailwind CSS, Framer Motion
+- Backend: Spring Boot 3, Spring Web, Spring Security, Spring Data MongoDB
+- Database: MongoDB
+- Build Tools: Maven, npm
+- Containerization: Docker, Docker Compose
+
+## Authentication and Authorization
+
+The application uses session-based authentication with Spring Security.
+
+### Authentication method
+
+1. User logs in using email + password at `POST /api/auth/login`.
+2. Backend authenticates credentials with Spring Security.
+3. Security context is stored in server session and tied to the session cookie.
+4. Frontend sends credentials/cookies on API calls (`withCredentials: true`).
+5. Current logged-in role is available at `GET /api/auth/me`.
+6. Logout is handled by `POST /api/auth/logout`.
+
+### Role-based authorization
+
+- `ROLE_ADMIN`
+- `ROLE_DOCTOR`
+- `ROLE_PATIENT`
+
+Both backend endpoint rules and frontend route guards are applied.
+
+## API Endpoints (Core)
+
+### Auth
+
+- `POST /api/auth/login`
+- `GET /api/auth/me`
+- `POST /api/auth/logout`
+- `POST /api/auth/register/patient`
+- `POST /api/auth/register/doctor`
+
+### Admin
+
+- `GET /api/admin/doctors`
+- `GET /api/admin/patients`
+- `GET /api/admin/appointments`
+- `GET /api/admin/payments`
+- `GET /api/admin/dashboard-stats`
+- `GET /api/admin/recent-appointments`
+- `GET /api/admin/recent-payments`
+- `DELETE /api/admin/doctors/{id}`
+- `DELETE /api/admin/patients/{id}`
+- `DELETE /api/admin/appointments/{id}`
+
+### Doctor categories
+
+- `GET /api/doctor-categories` (public)
+- `GET /api/admin/doctor-categories`
+- `POST /api/admin/doctor-categories`
+- `DELETE /api/admin/doctor-categories/{id}`
+
+### Doctors
+
+- `GET /api/doctors`
+- `POST /api/doctors/register`
+- `GET /api/doctors/{id}`
+- `PUT /api/doctors/{id}`
+- `GET /api/doctors/{id}/dashboard-stats`
+- `GET /api/doctors/{id}/appointments`
+- `POST /api/doctors/{id}/change-password`
+- `DELETE /api/doctors/{id}`
+
+### Patients
+
+- `GET /api/patients`
+- `POST /api/patients/register`
+- `GET /api/patients/{id}`
+- `PUT /api/patients/{id}`
+- `GET /api/patients/{id}/dashboard-stats`
+
+### Appointments
+
+- `POST /api/appointments/book`
+- `GET /api/appointments/{id}`
+- `GET /api/appointments/patient/{patientId}`
+- `PUT /api/appointments/reschedule`
+- `DELETE /api/appointments/{id}`
+
+### Medical records
+
+- `POST /api/records`
+- `GET /api/records`
+- `GET /api/records/{id}`
+- `GET /api/records/patient/{patientId}`
+
+### Payments
+
+- `GET /api/payments/patient/{patientId}`
+
+### Timeslots
+
+- `GET /api/timeslots/doctor/{doctorId}/available`
+- `GET /api/timeslots/doctor/{doctorId}`
+
+## Design Patterns Used
+
+- Layered architecture (Controller -> Service -> Repository)
+- MVC style API design with Spring controllers
+- Repository pattern with Spring Data MongoDB repositories
+- Service layer pattern for business logic
+- Dependency Injection (constructor/field injection managed by Spring)
+- DTO pattern for request/response payloads
 
 ## OOP Concepts Used
 
-### Core OOP Principles
-- **Encapsulation** - Data hiding through private fields and public methods
-- **Inheritance** - Extending Spring Boot classes and interfaces
-- **Polymorphism** - Method overriding and interface implementations
-- **Abstraction** - Abstract classes and interfaces for service layers
-
-### Design Patterns
-- **Model-View-Controller (MVC)** - Architectural pattern for web applications
-- **Dependency Injection** - IoC container management
-- **Repository Pattern** - Data access abstraction
-- **Service Layer Pattern** - Business logic separation
-- **Factory Pattern** - Bean creation and management
-
-### Spring-Specific OOP Features
-- **Annotations** - Declarative programming with @Controller, @Service, @Repository
-- **Aspect-Oriented Programming** - Cross-cutting concerns
-- **Bean Lifecycle Management** - Object creation and destruction
-
-## Data Structures Used
-
-### Collection Framework
-- **List** - Ordered collections for patient records, appointments
-- **Set** - Unique collections for roles, permissions
-- **Map** - Key-value pairs for configuration, caching
-- **Queue** - Appointment scheduling and processing
-
-### Spring Data Structures
-- **Model** - Data transfer objects
-- **Entity** - JPA entity representations
-- **DTO (Data Transfer Objects)** - Data transportation between layers
-- **Optional** - Null-safe data handling
-
-### Custom Data Structures
-- **Medical Records** - Patient information storage
-- **Appointment Scheduling** - Time-based data organization
-- **User Authentication** - Security credential management
-
-## Setup and Installation
-
-### Prerequisites
-- **Java 21** or higher
-- **Maven 3.6+** or use included Maven wrapper
-- **IDE** (IntelliJ IDEA, Eclipse, VS Code recommended)
-
-### Installation Steps
-
-1. **Clone the Repository**
-   ```bash
-   git clone https://github.com/IT-23161160/medical-system.git
-   cd medical-system
-   ```
-
-2. **Build the Project**
-   ```bash
-   # Using Maven wrapper (recommended)
-   ./mvnw clean install
-   
-   # Or using system Maven
-   mvn clean install
-   ```
-
-3. **Run the Application**
-   ```bash
-   # Using Maven wrapper
-   ./mvnw spring-boot:run
-   
-   # Or using system Maven
-   mvn spring-boot:run
-   
-   # Or run the JAR file
-   java -jar target/MedicalSystem-0.0.1-SNAPSHOT.jar
-   ```
-
-4. **Access the Application**
-   - Open your web browser
-   - Navigate to: `http://localhost:8080`
-   - Default port is 8080 (configurable in application.properties)
-
-### Configuration
-
-#### Application Properties
-Create `src/main/resources/application.properties` or `application.yml` for:
-- Database configuration
-- Server port settings
-- Security configurations
-- Logging levels
-
-#### Security Configuration
-The application includes Spring Security with:
-- Authentication mechanisms
-- Authorization rules
-- CSRF protection
-- Session management
+- Encapsulation: domain models and DTOs encapsulate state with getters/setters
+- Abstraction: services hide business and persistence details from controllers
+- Polymorphism: Spring interfaces (`AuthenticationManager`, `PasswordEncoder`, `MongoRepository`) provide pluggable behavior
+- Composition: controllers are composed with services, services with repositories
 
 ## Project Structure
 
-```
+```text
 medical-system/
-├── src/
-│   ├── main/
-│   │   ├── java/
-│   │   │   └── com/medicalSystem/
-│   │   │       ├── MedicalSystemApplication.java
-│   │   │       ├── controller/
-│   │   │       ├── service/
-│   │   │       ├── model/
-│   │   │       ├── repository/
-│   │   │       └── config/
-│   │   └── resources/
-│   │       ├── templates/
-│   │       ├── static/
-│   │       └── application.properties
-│   └── test/
-├── target/
-├── .mvn/
-├── pom.xml
-├── mvnw
-├── mvnw.cmd
-└── README.md
+  backend/   # Spring Boot API + security + MongoDB integration
+  frontend/  # React application
+  docker-compose.yml
 ```
 
-## Development
+## Run with Docker (Recommended)
 
-### Running Tests
+### Prerequisites
+
+- Docker Desktop (or Docker Engine + Compose)
+
+### Start
+
 ```bash
-./mvnw test
+docker compose up -d --build
 ```
 
-### Development Mode
-The application includes Spring Boot DevTools for:
-- Automatic restart on code changes
-- Live reload capabilities
-- Enhanced development experience
+### Access
 
-### Building for Production
+- Frontend: http://localhost:3000
+- Backend API: http://localhost:8080/api
+- MongoDB: mongodb://localhost:27017
+
+### Stop
+
 ```bash
-./mvnw clean package
+docker compose down
 ```
 
-## Features
+### Stop and remove DB volume
 
-- **User Authentication & Authorization**
-- **Medical Record Management**
-- **Appointment Scheduling**
-- **Patient Management**
-- **Secure Web Interface**
-- **RESTful API Support**
+```bash
+docker compose down -v
+```
 
-## Contributing
+Note: First Docker build is the slowest because base images and dependencies are downloaded.
 
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add some amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
+## Run Locally (Without Docker)
 
-## License
+### Prerequisites
 
-This project is open source and available under the [MIT License](LICENSE).
+- Java 21
+- Node.js 20+
+- npm
+- MongoDB running locally
 
-## Author
+### 1) Start MongoDB
 
-**IT-23161160** - [GitHub Profile](https://github.com/IT-23161160)
+If MongoDB is not installed locally, you can run it with Docker:
 
-## Support
+```bash
+docker run -d --name medical-mongo -p 27017:27017 mongo:7.0
+```
 
-For support and questions, please open an issue in the GitHub repository.
+### 2) Start backend
 
----
+```bash
+cd backend
+./mvnw spring-boot:run
+```
 
-**Note**: This medical system is designed for educational and demonstration purposes. Ensure proper security measures and compliance with healthcare regulations before using in production environments.
+Backend runs on: http://localhost:8080
+
+### 3) Start frontend
+
+```bash
+cd frontend
+npm install
+npm run dev
+```
+
+Frontend runs on: http://localhost:5173
+
+## Default Admin Credentials (Development)
+
+- Email: `admin@medicalsystem.com`
+- Password: `Admin@123`
+
+These values come from backend application properties and should be changed for production.
+
+## Notes
+
+- This project is intended for learning and portfolio demonstration.
+- For production, use HTTPS, secure secret management, stronger audit logging, and stricter ownership checks on all resource-level APIs.
