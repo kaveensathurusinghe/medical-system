@@ -1,15 +1,9 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import api from '../services/api';
+import api from '../../services/api';
 
-const roleRoute = {
-  ROLE_ADMIN: '/admin/dashboard',
-  ROLE_DOCTOR: '/doctor/dashboard',
-  ROLE_PATIENT: '/patient/dashboard',
-};
-
-const Login = () => {
+const AdminLogin = () => {
   const navigate = useNavigate();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -31,16 +25,18 @@ const Login = () => {
       const token = response?.data?.token;
       const role = response?.data?.role;
 
-      if (!token || !role || !roleRoute[role]) {
-        throw new Error('Unexpected login response');
+      if (!token || role !== 'ROLE_ADMIN') {
+        throw new Error('Only admin users can sign in here.');
       }
 
       localStorage.setItem('token', token);
       localStorage.setItem('role', role);
-      navigate(roleRoute[role]);
+      navigate('/admin/dashboard');
     } catch (err) {
-        const message = err?.response?.data?.content || err?.response?.data?.message || 'Login failed';
-        setError(message);
+      localStorage.removeItem('token');
+      localStorage.removeItem('role');
+      const message = err?.response?.data?.content || err?.message || 'Admin login failed';
+      setError(message);
     } finally {
       setLoading(false);
     }
@@ -54,15 +50,15 @@ const Login = () => {
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.45 }}
       >
-        <h1 className="text-3xl font-bold text-slate-900">Sign In</h1>
-        <p className="mt-2 text-sm text-slate-600">Access your MediCare dashboard</p>
+        <h1 className="text-3xl font-bold text-slate-900">Admin Login</h1>
+        <p className="mt-2 text-sm text-slate-600">Sign in as site administrator</p>
 
         {error && <p className="mt-4 rounded-xl bg-red-50 px-3 py-2 text-sm text-red-700">{error}</p>}
 
         <form onSubmit={handleLogin} className="mt-6 space-y-4">
           <div>
             <label htmlFor="email" className="mb-1 block text-sm font-semibold text-slate-700">
-              Email
+              Admin Email
             </label>
             <input
               id="email"
@@ -90,31 +86,24 @@ const Login = () => {
 
           <motion.button
             type="submit"
-            className="mt-2 w-full rounded-xl bg-cyan-700 px-4 py-3 font-semibold text-white transition hover:bg-cyan-800 disabled:opacity-60"
+            className="mt-2 w-full rounded-xl bg-slate-900 px-4 py-3 font-semibold text-white transition hover:bg-slate-800 disabled:opacity-60"
             whileHover={{ scale: 1.01 }}
             whileTap={{ scale: 0.99 }}
             disabled={loading}
           >
-            {loading ? 'Signing In...' : 'Login'}
+            {loading ? 'Signing In...' : 'Login as Admin'}
           </motion.button>
         </form>
 
         <p className="mt-6 text-sm text-slate-600">
-          Need an account?{' '}
-          <Link to="/register" className="font-semibold text-cyan-800 hover:underline">
-            Register
+          Staff or patient account?{' '}
+          <Link to="/login" className="font-semibold text-cyan-800 hover:underline">
+            Go to regular login
           </Link>
         </p>
-
-          <p className="mt-2 text-sm text-slate-600">
-            Site admin?{' '}
-            <Link to="/admin/login" className="font-semibold text-slate-900 hover:underline">
-              Admin login
-            </Link>
-          </p>
       </motion.div>
     </div>
   );
 };
 
-export default Login;
+export default AdminLogin;

@@ -4,6 +4,7 @@ import { BrowserRouter as Router, Navigate, Route, Routes } from 'react-router-d
 import Home from './components/Home';
 import Login from './components/Login';
 import Register from './components/Register';
+import AdminLogin from './components/admin/AdminLogin';
 
 import AdminDashboard from './components/admin/Dashboard';
 import AdminAppointments from './components/admin/Appointments';
@@ -53,6 +54,7 @@ function App() {
       <Routes>
         <Route path="/" element={<Home />} />
         <Route path="/login" element={<Login />} />
+          <Route path="/admin/login" element={<AdminLogin />} />
         <Route path="/register" element={<Register />} />
         <Route path="/register-patient" element={<Navigate to="/register" replace />} />
 

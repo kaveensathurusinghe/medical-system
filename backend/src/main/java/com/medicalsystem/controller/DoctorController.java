@@ -31,8 +31,12 @@ public class DoctorController {
     }
 
     @PostMapping("/register")
-    public ResponseEntity<Doctor> registerDoctor(@RequestBody Doctor doctor) {
-        return ResponseEntity.ok(doctorService.saveDoctor(doctor));
+    public ResponseEntity<?> registerDoctor(@RequestBody Doctor doctor) {
+        try {
+            return ResponseEntity.ok(doctorService.saveDoctor(doctor));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(new AdminController.Message("ERROR", e.getMessage()));
+        }
     }
 
     @GetMapping("/{id}")
@@ -43,16 +47,21 @@ public class DoctorController {
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<Doctor> updateDoctor(@PathVariable Long id, @RequestBody Doctor doctorDetails) {
-        Doctor doctor = doctorService.getDoctorById(id)
-                .orElseThrow(() -> new RuntimeException("Doctor not found with id: " + id));
+    public ResponseEntity<?> updateDoctor(@PathVariable Long id, @RequestBody Doctor doctorDetails) {
+        Doctor doctor = doctorService.getDoctorById(id).orElse(null);
+        if (doctor == null) {
+            return ResponseEntity.notFound().build();
+        }
 
-        doctor.setName(doctorDetails.getName());
-        doctor.setSpecialization(doctorDetails.getSpecialization());
-        doctor.setEmail(doctorDetails.getEmail());
-        doctor.setPhone(doctorDetails.getPhone());
-
-        return ResponseEntity.ok(doctorService.saveDoctor(doctor));
+        try {
+            doctor.setName(doctorDetails.getName());
+            doctor.setSpecialization(doctorDetails.getSpecialization());
+            doctor.setEmail(doctorDetails.getEmail());
+            doctor.setPhone(doctorDetails.getPhone());
+            return ResponseEntity.ok(doctorService.saveDoctor(doctor));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(new AdminController.Message("ERROR", e.getMessage()));
+        }
     }
 
     @GetMapping("/{id}/dashboard-stats")

@@ -35,6 +35,17 @@ public class DoctorCategoryService {
         return doctorCategoryRepository.save(category);
     }
 
+    public String resolveValidCategoryName(String name) {
+        String normalizedName = name == null ? "" : name.trim();
+        if (normalizedName.isBlank()) {
+            throw new IllegalArgumentException("Specialization is required");
+        }
+
+        return doctorCategoryRepository.findByNameIgnoreCase(normalizedName)
+                .map(DoctorCategory::getName)
+                .orElseThrow(() -> new IllegalArgumentException("Please select a specialization provided by admin"));
+    }
+
     public void deleteCategory(Long id) {
         DoctorCategory category = doctorCategoryRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Category not found"));

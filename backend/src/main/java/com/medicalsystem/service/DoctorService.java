@@ -27,13 +27,16 @@ public class DoctorService {
     @Autowired
     private PasswordEncoder passwordEncoder;
 
+    @Autowired
+    private DoctorCategoryService doctorCategoryService;
+
     public Doctor registerDoctor(String name, String email, String rawPassword,
                                  String phone, String specialization) {
         Doctor doctor = new Doctor();
         doctor.setName(name);
         doctor.setEmail(email);
         doctor.setPhone(phone);
-        doctor.setSpecialization(specialization);
+        doctor.setSpecialization(doctorCategoryService.resolveValidCategoryName(specialization));
         doctor.setPassword(passwordEncoder.encode(rawPassword));
         return doctorRepository.save(doctor);
     }
@@ -47,6 +50,7 @@ public class DoctorService {
     }
 
     public Doctor saveDoctor(Doctor doctor) {
+        doctor.setSpecialization(doctorCategoryService.resolveValidCategoryName(doctor.getSpecialization()));
         return doctorRepository.save(doctor);
     }
 

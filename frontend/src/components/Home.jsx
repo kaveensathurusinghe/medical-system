@@ -74,7 +74,7 @@ const Home = () => {
           </div>
 
           <div className="mt-8 grid gap-3 sm:grid-cols-3">
-            <Link to="/admin/dashboard" className="surface-card rounded-2xl p-4 transition hover:-translate-y-0.5">
+              <Link to="/admin/login" className="surface-card rounded-2xl p-4 transition hover:-translate-y-0.5">
               <ShieldCheck className="mb-2 text-cyan-700" size={20} />
               <p className="text-sm font-semibold text-slate-900">Admin</p>
             </Link>

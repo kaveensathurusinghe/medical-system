@@ -85,23 +85,22 @@ const RegisterDoctor = () => {
                     <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="specialization">
                         Specialization
                     </label>
-                    <input
-                        className="shadow appearance-none border rounded w-full py-3 px-4 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-                        id="specialization"
-                        type="text"
-                        list="doctor-category-options"
-                        name="specialization"
-                        value={formData.specialization}
-                        onChange={handleChange}
-                        required
-                    />
-                    <datalist id="doctor-category-options">
-                        {categories.map((category) => (
-                            <option key={category.id} value={category.name} />
-                        ))}
-                    </datalist>
-                    {categories.length > 0 && (
-                        <p className="mt-2 text-xs text-gray-500">Use one of the admin-defined categories, or type a custom specialization.</p>
+                      <select
+                          className="shadow appearance-none border rounded w-full py-3 px-4 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                          id="specialization"
+                          name="specialization"
+                          value={formData.specialization}
+                          onChange={handleChange}
+                          required
+                          disabled={categories.length === 0}
+                      >
+                          <option value="">Select specialization</option>
+                          {categories.map((category) => (
+                              <option key={category.id} value={category.name}>{category.name}</option>
+                          ))}
+                      </select>
+                      {categories.length === 0 && (
+                          <p className="mt-2 text-xs text-amber-700">No specializations available yet. Please add categories from Admin.</p>
                     )}
                 </div>
                 <div className="mb-6">
@@ -134,10 +133,11 @@ const RegisterDoctor = () => {
                 </div>
                 <div className="flex items-center justify-center">
                     <motion.button
-                        className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-full focus:outline-none focus:shadow-outline"
+                          className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-full focus:outline-none focus:shadow-outline disabled:cursor-not-allowed disabled:opacity-60"
                         type="submit"
                         whileHover={{ scale: 1.05 }}
                         whileTap={{ scale: 0.95 }}
+                          disabled={categories.length === 0}
                     >
                         Register Doctor
                     </motion.button>

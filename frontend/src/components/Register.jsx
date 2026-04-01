@@ -142,20 +142,27 @@ const Register = () => {
                 <label className="mb-1 block text-sm font-semibold text-slate-700" htmlFor="specialization">
                   Specialization
                 </label>
-                <input
+                <select
                   id="specialization"
                   name="specialization"
-                  list="doctor-category-options"
                   value={formData.specialization}
                   onChange={handleChange}
                   className="w-full rounded-xl border border-slate-200 px-3 py-2.5 outline-none ring-cyan-200 transition focus:ring"
                   required
-                />
-                <datalist id="doctor-category-options">
+                  disabled={categories.length === 0}
+                >
+                  <option value="">Select specialization</option>
                   {categories.map((category) => (
-                    <option key={category.id} value={category.name} />
+                    <option key={category.id} value={category.name}>
+                      {category.name}
+                    </option>
                   ))}
-                </datalist>
+                </select>
+                {categories.length === 0 && (
+                  <p className="mt-2 text-xs text-amber-700">
+                    No specializations are available yet. Please ask admin to add categories.
+                  </p>
+                )}
             </div>
           )}
 
@@ -164,7 +171,7 @@ const Register = () => {
             className="sm:col-span-2 mt-2 w-full rounded-xl bg-cyan-700 px-4 py-3 font-semibold text-white transition hover:bg-cyan-800 disabled:opacity-60"
             whileHover={{ scale: 1.01 }}
             whileTap={{ scale: 0.99 }}
-            disabled={loading}
+              disabled={loading || (userType === 'doctor' && categories.length === 0)}
           >
             {loading ? 'Registering...' : 'Register'}
           </motion.button>
