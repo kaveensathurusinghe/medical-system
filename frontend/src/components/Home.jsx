@@ -15,7 +15,7 @@ const Home = () => {
   useEffect(() => {
     const fetchGlanceStats = async () => {
       try {
-        const response = await api.get('/admin/dashboard-stats');
+        const response = await api.get('/public/today-at-a-glance');
         setGlanceStats({
           appointmentCount: response.data?.appointmentCount ?? 0,
           recordCount: response.data?.recordCount ?? 0,
@@ -96,34 +96,34 @@ const Home = () => {
           transition={{ duration: 0.55, delay: 0.08 }}
         >
           <h2 className="text-2xl font-bold text-slate-900">Today at a Glance</h2>
-            <p className="mt-2 text-slate-600">A quick live snapshot of appointments, records, and payments across your clinic.</p>
+            <p className="mt-2 text-slate-600">A live snapshot of today&apos;s appointments, records, and collected payments.</p>
 
           <div className="mt-6 space-y-4">
             <div className="surface-card rounded-2xl p-4">
               <div className="flex items-center justify-between">
-                <p className="text-sm font-medium text-slate-500">Appointments</p>
+                <p className="text-sm font-medium text-slate-500">Appointments Today</p>
                 <Calendar size={18} className="text-cyan-700" />
               </div>
                 <p className="mt-2 text-2xl font-bold text-slate-900">
                   {loadingStats ? '...' : glanceStats.appointmentCount}
                 </p>
-              <p className="mt-1 text-sm text-slate-500">Scheduled across all doctors</p>
+              <p className="mt-1 text-sm text-slate-500">Total scheduled for today</p>
             </div>
 
             <div className="surface-card rounded-2xl p-4">
-              <p className="text-sm font-medium text-slate-500">Records Updated</p>
+              <p className="text-sm font-medium text-slate-500">Records Updated Today</p>
                 <p className="mt-2 text-2xl font-bold text-slate-900">
                   {loadingStats ? '...' : glanceStats.recordCount}
                 </p>
-              <p className="mt-1 text-sm text-slate-500">Latest notes synchronized</p>
+              <p className="mt-1 text-sm text-slate-500">Clinical notes added today</p>
             </div>
 
             <div className="surface-card rounded-2xl p-4">
-              <p className="text-sm font-medium text-slate-500">Payments Processed</p>
+              <p className="text-sm font-medium text-slate-500">Payments Collected Today</p>
                 <p className="mt-2 text-2xl font-bold text-slate-900">
                   {loadingStats ? '...' : formatCurrency(glanceStats.paymentTotal)}
                 </p>
-                <p className="mt-1 text-sm text-slate-500">Total collected amount</p>
+                <p className="mt-1 text-sm text-slate-500">Total amount processed today</p>
             </div>
           </div>
         </motion.aside>

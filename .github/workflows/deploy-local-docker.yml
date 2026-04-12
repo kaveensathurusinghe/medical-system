@@ -1,0 +1,57 @@
+name: Deploy Local Docker Stack
+
+env:
+  DOCKER_BUILDKIT: "1"
+  COMPOSE_DOCKER_CLI_BUILD: "1"
+
+on:
+  workflow_run:
+    workflows:
+      - CI
+    branches:
+      - main
+    types:
+      - completed
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-local-docker
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    name: Deploy via Docker Compose
+    # This must run on your local self-hosted runner that has Docker + Compose.
+    if: >
+      github.event_name == 'workflow_dispatch' ||
+      github.event.workflow_run.conclusion == 'success'
+    runs-on:
+      - self-hosted
+      - local-docker
+
+    steps:
+      - name: Checkout CI commit
+        if: github.event_name == 'workflow_run'
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.workflow_run.head_sha }}
+
+      - name: Checkout manual commit
+        if: github.event_name == 'workflow_dispatch'
+        uses: actions/checkout@v4
+
+      - name: Verify Docker and Compose
+        run: |
+          docker --version
+          docker compose version
+
+      - name: Deploy stack
+        run: |
+          docker compose pull --ignore-pull-failures
+          docker compose up -d --build --remove-orphans
+
+      - name: Show running services
+        run: docker compose ps
+
+      - name: Prune dangling images
+        run: docker image prune -f

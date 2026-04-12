@@ -11,7 +11,9 @@ public class Payment {
     private String paymentId;
     private String appointmentId;
     private String patientId;
+    private String doctorId;
     private double amount;
+    private double doctorCharge;
     private String paymentMethod;
     private String cardNumber;
     private String cardHolderName;
@@ -22,13 +24,16 @@ public class Payment {
 
     public Payment() {}
 
-    public Payment(String paymentId, String appointmentId, String patientId, double amount,
+    public Payment(String paymentId, String appointmentId, String patientId, String doctorId,
+                   double amount, double doctorCharge,
                    String paymentMethod, String cardNumber, String cardHolderName,
                    String expiryDate, String cvv, LocalDateTime paymentDate, String status) {
         this.paymentId = paymentId;
         this.appointmentId = appointmentId;
         this.patientId = patientId;
+        this.doctorId = doctorId;
         this.amount = amount;
+        this.doctorCharge = doctorCharge;
         this.paymentMethod = paymentMethod;
         this.cardNumber = cardNumber;
         this.cardHolderName = cardHolderName;
@@ -62,12 +67,28 @@ public class Payment {
         this.patientId = patientId;
     }
 
+    public String getDoctorId() {
+        return doctorId;
+    }
+
+    public void setDoctorId(String doctorId) {
+        this.doctorId = doctorId;
+    }
+
     public double getAmount() {
         return amount;
     }
 
     public void setAmount(double amount) {
         this.amount = amount;
+    }
+
+    public double getDoctorCharge() {
+        return doctorCharge;
+    }
+
+    public void setDoctorCharge(double doctorCharge) {
+        this.doctorCharge = doctorCharge;
     }
 
     public String getPaymentMethod() {

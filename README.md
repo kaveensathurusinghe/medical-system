@@ -174,6 +174,38 @@ docker compose down
 docker compose down -v
 ```
 
+## GitHub CI/CD (Deploy To Local Docker)
+
+Two GitHub Actions workflows are included:
+
+- `.github/workflows/ci.yml`
+  - Runs backend tests (Java 21 + Maven wrapper)
+  - Builds frontend (Node 20)
+  - Validates Docker builds for backend and frontend
+  - Validates `docker-compose.yml`
+
+- `.github/workflows/deploy-local-docker.yml`
+  - Triggers after `CI` succeeds on `main` (and manual run)
+  - Deploys with `docker compose up -d --build --remove-orphans`
+  - Designed for a self-hosted runner on your local machine
+
+### Why self-hosted runner is required
+
+Deploying to local Docker containers means the workflow must run on the same machine that hosts your Docker engine. GitHub-hosted runners are ephemeral and cannot deploy to your personal local Docker runtime.
+
+### Self-hosted runner setup (one-time)
+
+1. In your GitHub repository, go to Settings -> Actions -> Runners.
+2. Add a self-hosted runner on your local machine (where Docker is installed).
+3. Add runner label `local-docker`.
+4. Keep the runner process active.
+
+After a successful `CI` run on `main`, the deployment workflow will use your existing `docker-compose.yml` and bring up:
+
+- `medicalsystem-mongodb` on `27017`
+- `medicalsystem-backend` on `8080`
+- `medicalsystem-frontend` on `3000`
+
 Note: First Docker build is the slowest because base images and dependencies are downloaded.
 
 ## Run Locally (Without Docker)

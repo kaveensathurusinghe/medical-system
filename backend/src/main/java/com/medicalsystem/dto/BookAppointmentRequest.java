@@ -6,6 +6,11 @@ public class BookAppointmentRequest {
     private String slotId;
     private String reason;
     private int urgencyLevel;
+    private String paymentMethod;
+    private String cardNumber;
+    private String cardHolderName;
+    private String expiryDate;
+    private String cvv;
 
     public String getPatientId() {
         return patientId;
@@ -45,5 +50,45 @@ public class BookAppointmentRequest {
 
     public void setUrgencyLevel(int urgencyLevel) {
         this.urgencyLevel = urgencyLevel;
+    }
+
+    public String getPaymentMethod() {
+        return paymentMethod;
+    }
+
+    public void setPaymentMethod(String paymentMethod) {
+        this.paymentMethod = paymentMethod;
+    }
+
+    public String getCardNumber() {
+        return cardNumber;
+    }
+
+    public void setCardNumber(String cardNumber) {
+        this.cardNumber = cardNumber;
+    }
+
+    public String getCardHolderName() {
+        return cardHolderName;
+    }
+
+    public void setCardHolderName(String cardHolderName) {
+        this.cardHolderName = cardHolderName;
+    }
+
+    public String getExpiryDate() {
+        return expiryDate;
+    }
+
+    public void setExpiryDate(String expiryDate) {
+        this.expiryDate = expiryDate;
+    }
+
+    public String getCvv() {
+        return cvv;
+    }
+
+    public void setCvv(String cvv) {
+        this.cvv = cvv;
     }
 }

@@ -24,6 +24,7 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                 .requestMatchers("/api/auth/login", "/api/auth/register/**", "/api/auth/logout").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/doctor-categories").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/public/today-at-a-glance").permitAll()
 
                 .requestMatchers("/api/admin/**").hasRole("ADMIN")
 
@@ -52,7 +53,7 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.PUT, "/api/timeslots/**").hasAnyRole("DOCTOR", "ADMIN")
                 .requestMatchers(HttpMethod.DELETE, "/api/timeslots/**").hasAnyRole("DOCTOR", "ADMIN")
 
-                .requestMatchers("/api/payments/**").hasAnyRole("PATIENT", "ADMIN")
+                .requestMatchers("/api/payments/**").hasAnyRole("PATIENT", "ADMIN", "DOCTOR")
                 .requestMatchers(HttpMethod.POST, "/api/records/**").hasAnyRole("DOCTOR", "ADMIN")
                 .requestMatchers(HttpMethod.GET, "/api/records/**").hasAnyRole("PATIENT", "DOCTOR", "ADMIN")
 

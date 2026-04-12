@@ -9,5 +9,6 @@ import java.util.List;
 @Repository
 public interface PaymentRepository extends MongoRepository<Payment, String> {
     List<Payment> findByPatientId(String patientId);
+    List<Payment> findByDoctorId(String doctorId);
     List<Payment> findAllByOrderByPaymentDateDesc();
 }

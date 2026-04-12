@@ -5,7 +5,10 @@ import com.medicalsystem.dto.BookAppointmentRequest;
 import com.medicalsystem.model.Appointment;
 import com.medicalsystem.service.AppointmentService;
 import com.medicalsystem.service.AuthorizationService;
+import com.medicalsystem.service.DoctorService;
 import com.medicalsystem.service.PatientService;
+import com.medicalsystem.service.PaymentService;
+import com.medicalsystem.service.SystemConfigService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -14,7 +17,9 @@ import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/appointments")
@@ -29,9 +34,38 @@ public class AppointmentController {
     @Autowired
     private AuthorizationService authorizationService;
 
+    @Autowired
+    private DoctorService doctorService;
+
+    @Autowired
+    private PaymentService paymentService;
+
+    @Autowired
+    private SystemConfigService systemConfigService;
+
+    @GetMapping("/booking-fee")
+    public ResponseEntity<?> getBookingFee(@RequestParam(value = "doctorId", required = false) Long doctorId) {
+        double defaultFee = systemConfigService.getConfig().getAppointmentFee();
+        Double doctorFee = doctorId == null
+                ? null
+                : doctorService.getDoctorById(doctorId)
+                    .map(d -> d.getConsultationFee())
+                    .orElse(null);
+
+        boolean useDoctorFee = doctorFee != null && doctorFee > 0;
+        Map<String, Object> response = new HashMap<>();
+        response.put("appointmentFee", useDoctorFee ? doctorFee : defaultFee);
+        response.put("feeSource", useDoctorFee ? "doctor" : "default");
+        response.put("doctorId", doctorId);
+        return ResponseEntity.ok(response);
+    }
+
     @PostMapping("/book")
     public ResponseEntity<?> bookAppointment(@RequestBody BookAppointmentRequest request,
                                              Authentication authentication) {
+        Appointment appointment = null;
+        Long slotId = null;
+
         try {
             Long patientId;
             boolean authenticatedPatient = authentication != null
@@ -47,14 +81,31 @@ public class AppointmentController {
             }
 
             Long doctorId = Long.valueOf(request.getDoctorId());
-            Long slotId = Long.valueOf(request.getSlotId());
+            slotId = Long.valueOf(request.getSlotId());
 
-            Appointment appointment = appointmentService.createAppointment(
+            double appointmentFee = resolveAppointmentFee(doctorId);
+            if (appointmentFee <= 0) {
+                throw new RuntimeException("Appointment fee is not configured");
+            }
+
+            appointment = appointmentService.createAppointment(
                     patientId,
                     doctorId,
                     slotId,
                     request.getUrgencyLevel(),
                     request.getReason()
+            );
+
+            paymentService.processPayment(
+                    String.valueOf(appointment.getId()),
+                    String.valueOf(patientId),
+                    String.valueOf(doctorId),
+                    appointmentFee,
+                    request.getPaymentMethod(),
+                    request.getCardNumber(),
+                    request.getCardHolderName(),
+                    request.getExpiryDate(),
+                    request.getCvv()
             );
 
             AppointmentDTO dto = appointmentService.convertToDto(appointment);
@@ -63,9 +114,33 @@ public class AppointmentController {
             return ResponseEntity.badRequest()
                     .body(new AdminController.Message("ERROR", "Invalid ID format for patient/doctor/slot"));
         } catch (RuntimeException e) {
+            if (appointment != null && slotId != null) {
+                try {
+                    appointmentService.rollbackCreatedAppointment(appointment.getId(), slotId);
+                } catch (RuntimeException rollbackException) {
+                    System.err.println("Rollback failed for appointment " + appointment.getId() + ": " + rollbackException.getMessage());
+                }
+            }
             return ResponseEntity.badRequest()
                     .body(new AdminController.Message("ERROR", e.getMessage()));
         }
+    }
+
+    private double resolveAppointmentFee(Long doctorId) {
+        double defaultFee = systemConfigService.getConfig().getAppointmentFee();
+        if (doctorId == null) {
+            return defaultFee;
+        }
+
+        return doctorService.getDoctorById(doctorId)
+                .map(doctor -> {
+                    Double fee = doctor.getConsultationFee();
+                    if (fee != null && fee > 0) {
+                        return fee;
+                    }
+                    return defaultFee;
+                })
+                .orElse(defaultFee);
     }
 
     @GetMapping("/{id}")

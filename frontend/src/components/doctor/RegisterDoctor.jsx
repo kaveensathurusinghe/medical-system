@@ -8,7 +8,8 @@ const RegisterDoctor = () => {
         name: '',
         specialization: '',
         email: '',
-        phone: ''
+        phone: '',
+        consultationFee: ''
     });
     const [categories, setCategories] = useState([]);
     const [message, setMessage] = useState('');
@@ -32,10 +33,20 @@ const RegisterDoctor = () => {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
+
+        const consultationFee = formData.consultationFee === '' ? null : Number(formData.consultationFee);
+        if (consultationFee != null && consultationFee <= 0) {
+            setMessage('Consultation fee must be greater than zero.');
+            return;
+        }
+
         try {
-            await api.post('/doctors/register', formData);
+            await api.post('/doctors/register', {
+                ...formData,
+                consultationFee,
+            });
             setMessage('Doctor registered successfully!');
-            setFormData({ name: '', specialization: '', email: '', phone: '' });
+            setFormData({ name: '', specialization: '', email: '', phone: '', consultationFee: '' });
         } catch (error) {
             console.error("Error registering doctor:", error);
             setMessage('Error registering doctor. Please try again.');
@@ -128,6 +139,23 @@ const RegisterDoctor = () => {
                         name="phone"
                         value={formData.phone}
                         onChange={handleChange}
+                        required
+                    />
+                </div>
+                <div className="mb-6">
+                    <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="consultationFee">
+                        Consultation Fee (LKR)
+                    </label>
+                    <input
+                        className="shadow appearance-none border rounded w-full py-3 px-4 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                        id="consultationFee"
+                        type="number"
+                        min="1"
+                        step="0.01"
+                        name="consultationFee"
+                        value={formData.consultationFee}
+                        onChange={handleChange}
+                        placeholder="e.g. 2500"
                         required
                     />
                 </div>

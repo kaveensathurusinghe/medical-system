@@ -41,6 +41,7 @@ public class DashboardController {
         stats.put("appointmentCount", appointmentService.getCompletedAppointmentsCount());
         stats.put("recordCount", medicalRecordService.countRecords());
         stats.put("paymentTotal", paymentService.getTotal());
+        stats.put("doctorChargesTotal", paymentService.getTotalDoctorCharges());
         return ResponseEntity.ok(stats);
     }
 

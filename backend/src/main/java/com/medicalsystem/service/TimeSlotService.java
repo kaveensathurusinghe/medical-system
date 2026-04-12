@@ -108,6 +108,14 @@ public class TimeSlotService {
         return timeSlotRepository.save(timeSlot);
     }
 
+    public TimeSlot releaseTimeSlot(Long slotId) {
+        TimeSlot timeSlot = timeSlotRepository.findById(slotId)
+                .orElseThrow(() -> new RuntimeException("Time slot not found with ID: " + slotId));
+
+        timeSlot.setAvailable(true);
+        return timeSlotRepository.save(timeSlot);
+    }
+
     public TimeSlot updateTimeSlot(TimeSlot timeSlot) {
         timeSlotRepository.findById(timeSlot.getId())
                 .orElseThrow(() -> new RuntimeException("Time slot not found with ID: " + timeSlot.getId()));

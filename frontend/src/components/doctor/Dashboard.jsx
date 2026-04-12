@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import api from '../../services/api';
 import { motion } from 'framer-motion';
-import { Calendar, Clock, Users } from 'lucide-react';
+import { Calendar, Clock, Users, Wallet } from 'lucide-react';
 import { resolveUserId } from '../../utils/sessionUser';
 
 const StatCard = ({ icon, label, value, color }) => (
@@ -24,6 +24,7 @@ const Dashboard = () => {
         upcomingAppointments: 0,
         todayAppointments: 0,
         totalPatients: 0,
+        totalIncome: 0,
     });
     const [recentAppointments, setRecentAppointments] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -65,6 +66,12 @@ const Dashboard = () => {
         visible: { y: 0, opacity: 1 }
     };
 
+    const formatCurrency = (amount) => new Intl.NumberFormat('en-LK', {
+        style: 'currency',
+        currency: 'LKR',
+        minimumFractionDigits: 2,
+    }).format(Number(amount) || 0);
+
     if (loading) return <div className="flex justify-center items-center h-screen"><p>Loading...</p></div>;
     if (error) return <div className="flex justify-center items-center h-screen"><p className="text-red-500">{error}</p></div>;
 
@@ -78,7 +85,7 @@ const Dashboard = () => {
             <h1 className="text-4xl font-bold mb-8 text-gray-800">Doctor's Dashboard</h1>
 
             <motion.div 
-                className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mb-12"
+                className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 mb-12"
                 variants={containerVariants}
                 initial="hidden"
                 animate="visible"
@@ -86,6 +93,7 @@ const Dashboard = () => {
                 <StatCard icon={<Calendar size={24} className="text-white"/>} label="Upcoming Appointments" value={stats.upcomingAppointments} color="bg-blue-500" />
                 <StatCard icon={<Clock size={24} className="text-white"/>} label="Appointments Today" value={stats.todayAppointments} color="bg-green-500" />
                 <StatCard icon={<Users size={24} className="text-white"/>} label="Total Patients" value={stats.totalPatients} color="bg-indigo-500" />
+                <StatCard icon={<Wallet size={24} className="text-white"/>} label="Total Income" value={formatCurrency(stats.totalIncome)} color="bg-emerald-500" />
             </motion.div>
 
             <motion.div variants={itemVariants}>

@@ -61,7 +61,12 @@ public class AppointmentService {
         appointment.setReason(reason);
         timeSlotService.bookTimeSlot(slotId);
 
-        return appointmentRepository.save(appointment);
+        try {
+            return appointmentRepository.save(appointment);
+        } catch (RuntimeException e) {
+            timeSlotService.releaseTimeSlot(slotId);
+            throw e;
+        }
     }
 
     public List<Appointment> getAllAppointments() {
@@ -101,6 +106,15 @@ public class AppointmentService {
 
     public void deleteAppointment(Long id) {
         appointmentRepository.deleteById(id);
+    }
+
+    public void rollbackCreatedAppointment(Long appointmentId, Long slotId) {
+        if (appointmentId != null) {
+            appointmentRepository.deleteById(appointmentId);
+        }
+        if (slotId != null) {
+            timeSlotService.releaseTimeSlot(slotId);
+        }
     }
 
     public Appointment rescheduleAppointment(Long id, LocalDateTime newTime) {
@@ -150,6 +164,18 @@ public class AppointmentService {
                 .filter(a -> "COMPLETED".equalsIgnoreCase(a.getStatus()))
                 .count();
     }
+
+        public long getTodayAppointmentsCount() {
+        LocalDate today = LocalDate.now();
+        LocalDateTime startOfDay = today.atStartOfDay();
+        LocalDateTime endOfDay = today.atTime(LocalTime.MAX);
+
+        return appointmentRepository.findAll().stream()
+            .filter(a -> a.getAppointmentTime() != null)
+            .filter(a -> !a.getAppointmentTime().isBefore(startOfDay)
+                && !a.getAppointmentTime().isAfter(endOfDay))
+            .count();
+        }
 
     /**
      * Return the most recent appointments ordered by appointmentTime desc.

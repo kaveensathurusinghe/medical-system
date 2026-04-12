@@ -33,6 +33,9 @@ public class DoctorService {
     @Autowired
     private SequenceGeneratorService sequenceGeneratorService;
 
+    @Autowired
+    private PaymentService paymentService;
+
     public Doctor registerDoctor(String name, String email, String rawPassword,
                                  String phone, String specialization) {
         Doctor doctor = new Doctor();
@@ -57,6 +60,11 @@ public class DoctorService {
         if (doctor.getId() == null) {
             doctor.setId(sequenceGeneratorService.generateSequence("doctor_seq"));
         }
+
+        if (doctor.getConsultationFee() != null && doctor.getConsultationFee() <= 0) {
+            throw new IllegalArgumentException("Consultation fee must be greater than zero");
+        }
+
         doctor.setSpecialization(doctorCategoryService.resolveValidCategoryName(doctor.getSpecialization()));
         return doctorRepository.save(doctor);
     }
@@ -102,10 +110,13 @@ public class DoctorService {
                 .distinct()
                 .count();
 
+        double totalIncome = paymentService.getTotalIncomeByDoctorId(String.valueOf(doctorId));
+
         DoctorDashboardStats stats = new DoctorDashboardStats();
         stats.setUpcomingAppointments(upcoming);
         stats.setTodayAppointments(todayCount);
         stats.setTotalPatients(totalPatients);
+        stats.setTotalIncome(totalIncome);
         return stats;
     }
 }

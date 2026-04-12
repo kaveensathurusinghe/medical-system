@@ -12,6 +12,7 @@ public class Doctor {
     private String specialization;
     private String email;
     private String phone;
+    private Double consultationFee;
     private String password;
 
     public Long getId() {
@@ -52,6 +53,14 @@ public class Doctor {
 
     public void setPhone(String phone) {
         this.phone = phone;
+    }
+
+    public Double getConsultationFee() {
+        return consultationFee;
+    }
+
+    public void setConsultationFee(Double consultationFee) {
+        this.consultationFee = consultationFee;
     }
 
     public String getPassword() {

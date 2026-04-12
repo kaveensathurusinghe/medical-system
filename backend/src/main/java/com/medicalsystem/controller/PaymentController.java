@@ -12,7 +12,9 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/payments")
@@ -40,5 +42,46 @@ public class PaymentController {
         }
 
         return ResponseEntity.ok(paymentService.getPaymentsByPatientId(patientId));
+    }
+
+    @GetMapping("/doctor/{doctorId}")
+    public ResponseEntity<?> getPaymentsByDoctor(@PathVariable String doctorId,
+                                                 Authentication authentication) {
+        Long doctorIdLong;
+        try {
+            doctorIdLong = Long.valueOf(doctorId);
+        } catch (NumberFormatException e) {
+            return ResponseEntity.badRequest().body(new AdminController.Message("ERROR", "Invalid doctor ID format"));
+        }
+
+        if (!authorizationService.canAccessDoctor(authentication, doctorIdLong)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(new AdminController.Message("ERROR", "You can only view your own payment data"));
+        }
+
+        return ResponseEntity.ok(paymentService.getPaymentsByDoctorId(doctorId));
+    }
+
+    @GetMapping("/doctor/{doctorId}/income")
+    public ResponseEntity<?> getDoctorIncome(@PathVariable String doctorId,
+                                             Authentication authentication) {
+        Long doctorIdLong;
+        try {
+            doctorIdLong = Long.valueOf(doctorId);
+        } catch (NumberFormatException e) {
+            return ResponseEntity.badRequest().body(new AdminController.Message("ERROR", "Invalid doctor ID format"));
+        }
+
+        if (!authorizationService.canAccessDoctor(authentication, doctorIdLong)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(new AdminController.Message("ERROR", "You can only view your own income"));
+        }
+
+        List<Payment> doctorPayments = paymentService.getPaymentsByDoctorId(doctorId);
+        Map<String, Object> response = new HashMap<>();
+        response.put("doctorId", doctorId);
+        response.put("paymentCount", doctorPayments.size());
+        response.put("totalIncome", paymentService.getTotalIncomeByDoctorId(doctorId));
+        return ResponseEntity.ok(response);
     }
 }

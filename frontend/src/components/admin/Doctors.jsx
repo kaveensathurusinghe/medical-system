@@ -13,6 +13,12 @@ const Doctors = () => {
     const [creatingCategory, setCreatingCategory] = useState(false);
     const [deletingCategoryId, setDeletingCategoryId] = useState(null);
 
+    const formatCurrency = (amount) => new Intl.NumberFormat('en-LK', {
+        style: 'currency',
+        currency: 'LKR',
+        minimumFractionDigits: 2,
+    }).format(Number(amount) || 0);
+
     useEffect(() => {
         const fetchDoctorsAndCategories = async () => {
             try {
@@ -194,6 +200,10 @@ const Doctors = () => {
                                 <div className="text-gray-600 space-y-2">
                                     <p><span className="font-semibold">Email:</span> {doctor.email}</p>
                                     <p><span className="font-semibold">Phone:</span> {doctor.phone}</p>
+                                    <p>
+                                        <span className="font-semibold">Consultation Fee:</span>{' '}
+                                        {doctor.consultationFee != null ? formatCurrency(doctor.consultationFee) : 'Not set'}
+                                    </p>
                                 </div>
                             </div>
                             <div className="bg-gray-50 px-6 py-4 flex justify-end">

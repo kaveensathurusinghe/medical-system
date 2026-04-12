@@ -9,7 +9,8 @@ const EditDoctorProfile = () => {
         name: '',
         specialization: '',
         email: '',
-        phone: ''
+        phone: '',
+        consultationFee: ''
     });
     const [categories, setCategories] = useState([]);
     const [message, setMessage] = useState('');
@@ -26,7 +27,14 @@ const EditDoctorProfile = () => {
                     api.get(`/doctors/${resolvedDoctorId}`),
                     api.get('/doctor-categories')
                 ]);
-                setFormData(doctorResponse.data);
+                const doctorData = doctorResponse.data || {};
+                setFormData({
+                    name: doctorData.name || '',
+                    specialization: doctorData.specialization || '',
+                    email: doctorData.email || '',
+                    phone: doctorData.phone || '',
+                    consultationFee: doctorData.consultationFee ?? '',
+                });
                 setCategories(categoryResponse.data);
             } catch (error) {
                 console.error("Error fetching doctor details:", error);
@@ -49,8 +57,17 @@ const EditDoctorProfile = () => {
             return;
         }
 
+        const consultationFee = formData.consultationFee === '' ? null : Number(formData.consultationFee);
+        if (consultationFee != null && consultationFee <= 0) {
+            setMessage('Consultation fee must be greater than zero.');
+            return;
+        }
+
         try {
-            await api.put(`/doctors/${doctorId}`, formData);
+            await api.put(`/doctors/${doctorId}`, {
+                ...formData,
+                consultationFee,
+            });
             setMessage('Profile updated successfully!');
         } catch (error) {
             console.error("Error updating profile:", error);
@@ -148,6 +165,23 @@ const EditDoctorProfile = () => {
                         name="phone"
                         value={formData.phone}
                         onChange={handleChange}
+                        required
+                    />
+                </div>
+                <div className="mb-6">
+                    <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="consultationFee">
+                        Consultation Fee (LKR)
+                    </label>
+                    <input
+                        className="shadow appearance-none border rounded w-full py-3 px-4 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                        id="consultationFee"
+                        type="number"
+                        min="1"
+                        step="0.01"
+                        name="consultationFee"
+                        value={formData.consultationFee}
+                        onChange={handleChange}
+                        placeholder="e.g. 2500"
                         required
                     />
                 </div>

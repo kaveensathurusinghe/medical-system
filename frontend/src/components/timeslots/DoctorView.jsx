@@ -141,6 +141,24 @@ const DoctorView = () => {
         visible: { y: 0, opacity: 1 }
     };
 
+    const getSlotTheme = (isAvailable) => {
+        if (isAvailable) {
+            return {
+                card: 'border-cyan-200 bg-gradient-to-br from-cyan-50 via-white to-sky-50 text-slate-800',
+                icon: 'text-cyan-700',
+                date: 'text-slate-600',
+                status: 'bg-cyan-100 text-cyan-800',
+            };
+        }
+
+        return {
+            card: 'border-slate-200 bg-gradient-to-br from-slate-100 via-white to-slate-50 text-slate-700',
+            icon: 'text-slate-500',
+            date: 'text-slate-500',
+            status: 'bg-slate-200 text-slate-700',
+        };
+    };
+
     if (loading) {
         return <div className="flex justify-center items-center h-screen">
             <div className="animate-spin rounded-full h-32 w-32 border-t-2 border-b-2 border-blue-500"></div>
@@ -163,8 +181,8 @@ const DoctorView = () => {
                 <h2 className="text-2xl font-semibold text-gray-800 mb-4">Set Availability</h2>
                 <p className="text-sm text-gray-600 mb-4">Pick a time range and slot duration. The system will split it into equal appointment slots.</p>
 
-                {message && <p className="mb-3 rounded-lg bg-green-50 px-3 py-2 text-sm text-green-700">{message}</p>}
-                {error && <p className="mb-3 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">{error}</p>}
+                {message && <p className="mb-3 rounded-lg bg-cyan-50 px-3 py-2 text-sm text-cyan-700">{message}</p>}
+                {error && <p className="mb-3 rounded-lg bg-amber-50 px-3 py-2 text-sm text-amber-700">{error}</p>}
 
                 <form onSubmit={handleGenerateSlots} className="grid grid-cols-1 md:grid-cols-4 gap-4">
                     <div>
@@ -237,30 +255,36 @@ const DoctorView = () => {
                 initial="hidden"
                 animate="visible"
             >
-                {timeslots.map(slot => (
-                    <motion.div
-                        key={slot.id}
-                        className={`p-6 rounded-lg shadow-lg text-white ${slot.available ? 'bg-green-500' : 'bg-red-500'}`}
-                        variants={itemVariants}
-                    >
-                        <div className="flex items-center mb-4">
-                            <Clock className="w-6 h-6 mr-3" />
-                            <h3 className="text-2xl font-bold">{new Date(slot.startTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} - {new Date(slot.endTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</h3>
-                        </div>
-                        <p className="text-lg mb-2">{new Date(slot.startTime).toDateString()}</p>
-                        <p className="font-semibold text-xl">{slot.available ? 'Available' : 'Booked'}</p>
-                        {slot.available && (
-                            <button
-                                type="button"
-                                onClick={() => handleDeleteSlot(slot.id)}
-                                className="mt-4 inline-flex items-center gap-2 rounded-md bg-white/20 px-3 py-2 text-sm font-semibold hover:bg-white/30"
-                            >
-                                <Trash2 size={16} />
-                                Delete
-                            </button>
-                        )}
-                    </motion.div>
-                ))}
+                {timeslots.map((slot) => {
+                    const theme = getSlotTheme(slot.available);
+
+                    return (
+                        <motion.div
+                            key={slot.id}
+                            className={`rounded-xl border p-6 shadow-sm ${theme.card}`}
+                            variants={itemVariants}
+                        >
+                            <div className="flex items-center mb-4">
+                                <Clock className={`w-6 h-6 mr-3 ${theme.icon}`} />
+                                <h3 className="text-2xl font-bold">{new Date(slot.startTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} - {new Date(slot.endTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</h3>
+                            </div>
+                            <p className={`mb-3 text-sm ${theme.date}`}>{new Date(slot.startTime).toDateString()}</p>
+                            <span className={`inline-flex rounded-full px-3 py-1 text-sm font-semibold ${theme.status}`}>
+                                {slot.available ? 'Available' : 'Booked'}
+                            </span>
+                            {slot.available && (
+                                <button
+                                    type="button"
+                                    onClick={() => handleDeleteSlot(slot.id)}
+                                    className="mt-4 inline-flex items-center gap-2 rounded-md bg-cyan-700 px-3 py-2 text-sm font-semibold text-white transition hover:bg-cyan-800"
+                                >
+                                    <Trash2 size={16} />
+                                    Delete
+                                </button>
+                            )}
+                        </motion.div>
+                    );
+                })}
             </motion.div>
             {timeslots.length === 0 && !loading && (
                 <div className="text-center py-12 text-gray-500">

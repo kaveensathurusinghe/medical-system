@@ -71,6 +71,9 @@ public class DoctorController {
             doctor.setSpecialization(doctorDetails.getSpecialization());
             doctor.setEmail(doctorDetails.getEmail());
             doctor.setPhone(doctorDetails.getPhone());
+            if (doctorDetails.getConsultationFee() != null) {
+                doctor.setConsultationFee(doctorDetails.getConsultationFee());
+            }
             return ResponseEntity.ok(doctorService.saveDoctor(doctor));
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(new AdminController.Message("ERROR", e.getMessage()));
