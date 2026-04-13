@@ -15,6 +15,7 @@ Full‑stack medical management system built with a React (Vite) frontend, Sprin
 - [CI/CD pipeline](#cicd-pipeline)
 - [Monitoring & dashboards](#monitoring--dashboards)
 - [Configuration & secrets](#configuration--secrets)
+ - [Screenshots](#screenshots)
 - [Troubleshooting](#troubleshooting)
 
 ---
@@ -27,6 +28,12 @@ This repository contains:
 - A Spring Boot (Java 21) API in `backend/` using MongoDB.
 - A Docker Compose stack that runs the app + MongoDB + Prometheus + Grafana locally.
 - GitHub Actions workflows for CI (build & test) and CD (deploy to a self‑hosted Docker runner).
+
+DevOps‑oriented features:
+
+- Reproducible local stack via Docker Compose.
+- CI/CD to GHCR and a self‑hosted Docker runner.
+- Built‑in metrics and dashboards (Prometheus + Grafana).
 
 Key files:
 
@@ -257,6 +264,24 @@ The Compose stack uses env files for configuration:
 - `GHCR_OWNER` – owner/namespace for images in GHCR.
 - GitHub Actions must have permissions to push to GHCR.
 - Other sensitive values (if any) should be stored as GitHub Actions secrets, **not** committed to the repo.
+
+---
+
+## Screenshots
+
+A few DevOps‑oriented views for this project:
+
+### GitHub Actions – CI workflow
+
+![GitHub Actions CI workflow](docs/diagrams/ci-screenshot.png)
+
+### GitHub Actions – CD / deploy workflow
+
+![GitHub Actions CD workflow](docs/diagrams/cd-screenshot.png)
+
+### Docker containers running the stack
+
+![Docker containers](docs/diagrams/container-screenshot.png)
 
 ---
 
