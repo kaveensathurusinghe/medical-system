@@ -151,46 +151,15 @@ DevOps Documentation (architecture, pipeline, deployment)
 
 Architecture
 
-```mermaid
-graph LR
-  Browser --> Frontend[React (Vite / Nginx)]
-  Frontend --> Backend[Spring Boot (Java 21)]
-  Backend --> MongoDB[(MongoDB)]
-  Backend --> Prometheus[Prometheus (metrics)]
-  Prometheus --> Grafana[Grafana (dashboard)]
-```
+![Architecture](docs/diagrams/architecture.png)
 
 Pipeline (CI → Publish → CD)
 
-```mermaid
-graph LR
-  GitHubRepo[GitHub Repo] --> CI[GitHub Actions CI (build / test)]
-  CI -->|on main| Publish[Push images to GHCR (sha + latest)]
-  Publish --> DeployWorkflow[Deploy workflow (workflow_run)]
-  DeployWorkflow --> SelfHosted[Self-hosted runner: local-docker]
-  SelfHosted --> DockerCompose[Docker Compose: pull & up --no-build]
-```
+![Pipeline](docs/diagrams/pipeline.png)
 
 Deployment flow (sequence)
 
-```mermaid
-sequenceDiagram
-  participant Dev as Developer
-  participant Repo as GitHub
-  participant CI as GitHub Actions CI
-  participant Registry as GHCR
-  participant Runner as Self-hosted runner
-  participant Compose as Docker Compose (host)
-
-  Dev->>Repo: push to `main`
-  Repo->>CI: trigger CI (build & tests)
-  CI->>Registry: push images (sha + latest)
-  CI-->>Repo: CI completes
-  Repo->>Runner: workflow_run triggers deploy
-  Runner->>Compose: pull images, start containers
-  Runner->>Backend: poll `/api/health` until healthy
-
-```
+![Deployment flow](docs/diagrams/deployment-flow.png)
 
 Monitoring & dashboards
 - Prometheus scrapes `backend` at `/actuator/prometheus` and `node-exporter` (if enabled). Grafana is provisioned to load `grafana/dashboards/medical-system-overview.json` with CPU, memory and API latency panels.
