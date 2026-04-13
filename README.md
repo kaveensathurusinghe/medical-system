@@ -1,4 +1,4 @@
-# Medical System
+# Full-Stack DevOps CI/CD Pipeline with Docker & Self-Hosted Runner
 
 Full‑stack medical management system built with a React (Vite) frontend, Spring Boot backend, and MongoDB, packaged for local Docker and wired with GitHub Actions CI/CD and monitoring.
 
