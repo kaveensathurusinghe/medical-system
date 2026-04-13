@@ -1,4 +1,4 @@
-# Medical System (compact)
+# Medical System
 
 A compact full-stack medical management demo: React frontend → Spring Boot backend → MongoDB. This README focuses on how to run and the DevOps surface (CI/CD, monitoring, deploy).
 
