@@ -186,8 +186,16 @@ Two GitHub Actions workflows are included:
 
 - `.github/workflows/deploy-local-docker.yml`
   - Triggers after `CI` succeeds on `main` (and manual run)
-  - Deploys with `docker compose up -d --build --remove-orphans`
-  - Designed for a self-hosted runner on your local machine
+  - Deploys by pulling published images and starting containers: `docker compose pull --ignore-pull-failures && docker compose up -d --no-build --remove-orphans`
+  - Uses environment-specific env files: add `.env.dev` and `.env.prod` at the repository root. The compose services load the file selected by the `COMPOSE_ENV` variable (`COMPOSE_ENV=prod` by default for deployment).
+  - For local development you can run with the dev env file:
+
+```bash
+COMPOSE_ENV=dev docker compose up -d
+# or explicitly:
+docker compose --env-file .env.dev up -d
+```
+  - Designed for a self-hosted runner on your local machine. Automatic deploys only run when CI succeeds on `main`; manual dispatch is still supported.
 
 ### Why self-hosted runner is required
 

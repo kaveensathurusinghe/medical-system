@@ -1,5 +1,7 @@
 services:
   mongodb:
+    env_file:
+      - .env.${COMPOSE_ENV:-prod}
     image: mongo:7.0
     container_name: medicalsystem-mongodb
     restart: unless-stopped
@@ -15,13 +17,16 @@ services:
       start_period: 20s
 
   backend:
+    env_file:
+      - .env.${COMPOSE_ENV:-prod}
+    image: ghcr.io/${GHCR_OWNER:-kaveensathurusinghe}/medical-system-backend:${BACKEND_IMAGE_TAG:-latest}
     build:
       context: ./backend
       dockerfile: Dockerfile
     container_name: medicalsystem-backend
     restart: unless-stopped
     environment:
-      MONGODB_URI: mongodb://mongodb:27017/medicalsystem
+      MONGODB_URI: ${MONGODB_URI:-mongodb://mongodb:27017/medicalsystem}
     depends_on:
       mongodb:
         condition: service_healthy
@@ -29,6 +34,9 @@ services:
       - "8080:8080"
 
   frontend:
+    env_file:
+      - .env.${COMPOSE_ENV:-prod}
+    image: ghcr.io/${GHCR_OWNER:-kaveensathurusinghe}/medical-system-frontend:${FRONTEND_IMAGE_TAG:-latest}
     build:
       context: ./frontend
       dockerfile: Dockerfile
@@ -38,6 +46,63 @@ services:
       - backend
     ports:
       - "3000:80"
+ 
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: prometheus
+    restart: unless-stopped
+    env_file:
+      - .env.${COMPOSE_ENV:-prod}
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus_data:/prometheus
+    command:
+      - --config.file=/etc/prometheus/prometheus.yml
+    depends_on:
+      - cadvisor
+      - backend
+
+  grafana:
+    image: grafana/grafana:9.4.7
+    container_name: grafana
+    restart: unless-stopped
+    env_file:
+      - .env.${COMPOSE_ENV:-prod}
+    ports:
+      - "3001:3000"
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./grafana/provisioning:/etc/grafana/provisioning:ro
+    depends_on:
+      - prometheus
+
+  cadvisor:
+    image: gcr.io/google-containers/cadvisor:latest
+    container_name: cadvisor
+    restart: unless-stopped
+    ports:
+      - "8081:8080"
+    volumes:
+      - /:/rootfs:ro
+      - /var/run:/var/run:ro
+      - /sys:/sys:ro
+      - /var/lib/docker/:/var/lib/docker:ro
+
+  node-exporter:
+    image: prom/node-exporter:latest
+    container_name: node-exporter
+    restart: unless-stopped
+    pid: "host"
+    ports:
+      - "9100:9100"
+    volumes:
+      - /proc:/host/proc:ro
+      - /sys:/host/sys:ro
+      - /:/rootfs:ro
 
 volumes:
   mongo_data:
+  prometheus_data:
+  grafana_data:

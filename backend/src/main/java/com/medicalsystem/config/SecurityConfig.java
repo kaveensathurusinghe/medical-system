@@ -25,6 +25,7 @@ public class SecurityConfig {
                 .requestMatchers("/api/auth/login", "/api/auth/register/**", "/api/auth/logout").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/doctor-categories").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/public/today-at-a-glance").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/health").permitAll()
 
                 .requestMatchers("/api/admin/**").hasRole("ADMIN")
 
