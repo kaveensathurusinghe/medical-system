@@ -1,180 +1,276 @@
 # Medical System
 
-A compact full-stack medical management demo: React frontend → Spring Boot backend → MongoDB. This README focuses on how to run and the DevOps surface (CI/CD, monitoring, deploy).
+Full‑stack medical management system built with a React (Vite) frontend, Spring Boot backend, and MongoDB, packaged for local Docker and wired with GitHub Actions CI/CD and monitoring.
 
-Key paths
-- CI workflow: .github/workflows/ci.yml
-- Deploy workflow: .github/workflows/deploy-local-docker.yml
-- Docker Compose: docker-compose.yml
+---
 
-Quick start (Docker)
+## Table of contents
 
-Prereqs: Docker Desktop (or Docker Engine + Compose)
+- [Overview](#overview)
+- [Architecture](#architecture)
+- [Tech stack](#tech-stack)
+- [Project structure](#project-structure)
+- [Getting started (Docker)](#getting-started-docker)
+- [Local development](#local-development)
+- [CI/CD pipeline](#cicd-pipeline)
+- [Monitoring & dashboards](#monitoring--dashboards)
+- [Configuration & secrets](#configuration--secrets)
+- [Troubleshooting](#troubleshooting)
 
-Dev (build locally):
+---
+
+## Overview
+
+This repository contains:
+
+- A React (Vite) SPA in `frontend/` for patients, doctors, and admins.
+- A Spring Boot (Java 21) API in `backend/` using MongoDB.
+- A Docker Compose stack that runs the app + MongoDB + Prometheus + Grafana locally.
+- GitHub Actions workflows for CI (build & test) and CD (deploy to a self‑hosted Docker runner).
+
+Key files:
+
+- CI workflow: `.github/workflows/ci.yml`
+- Deploy workflow: `.github/workflows/deploy-local-docker.yml`
+- Compose stack: `docker-compose.yml`
+
+---
+
+## Architecture
+
+High‑level architecture of the system running via Docker Compose:
+
+![Architecture](docs/diagrams/architecture.png)
+
+- Browser → React (Vite) frontend served by Nginx (in the `frontend` container).
+- Frontend → Spring Boot backend (`backend` container).
+- Backend → MongoDB database (`mongodb` container).
+- Backend exposes metrics to Prometheus, visualized in Grafana.
+
+---
+
+## Tech stack
+
+- **Frontend**: React, Vite, Nginx (for production container image).
+- **Backend**: Spring Boot (Java 21), Spring Data MongoDB, Spring Security.
+- **Database**: MongoDB official Docker image.
+- **Build tools**: Maven (backend), npm (frontend).
+- **Container / Orchestration**: Docker, Docker Compose.
+- **CI/CD**: GitHub Actions, GitHub Container Registry (GHCR).
+- **Observability**: Spring Boot Actuator, Micrometer Prometheus registry, Prometheus, Grafana.
+
+---
+
+## Project structure
+
+Top‑level layout (simplified):
+
+- `backend/` – Spring Boot application (Java 21, Maven).
+- `frontend/` – React (Vite) SPA.
+- `docker-compose.yml` – local stack (app + MongoDB + monitoring).
+- `prometheus/` – Prometheus configuration.
+- `grafana/` – Grafana provisioning (datasource + dashboards).
+- `docs/diagrams/` – PNG diagrams used in this README.
+
+Backend layout (simplified):
+
+- `backend/src/main/java/com/medicalsystem/...` – controllers, services, repositories, config.
+- `backend/src/main/resources/application.properties` – Spring Boot configuration.
+- `backend/pom.xml` – backend dependencies and plugins.
+
+Frontend layout (simplified):
+
+- `frontend/src/components/...` – React components for patients, doctors, admin.
+- `frontend/src/services/api.js` – API helper for calling the backend.
+
+---
+
+## Getting started (Docker)
+
+### Prerequisites
+
+- Docker Desktop (recommended) or Docker Engine + Docker Compose.
+
+Environment selection is driven by `COMPOSE_ENV`:
+
+- `COMPOSE_ENV=dev` → uses `.env.dev` (development settings).
+- default (no `COMPOSE_ENV` or `COMPOSE_ENV=prod`) → uses `.env.prod` (production‑like settings).
+
+### Quick start – development stack
+
+Build backend and frontend locally, then start everything:
+
 ```bash
 COMPOSE_ENV=dev docker compose up -d --build
 ```
 
-Prod (CI publishes images; deploy pulls without building):
-```bash
-docker compose pull --ignore-pull-failures
-docker compose up -d --no-build --remove-orphans
-```
+Once up:
 
-Access
 - Frontend: http://localhost:3000
 - Backend API: http://localhost:8080/api
 - Prometheus: http://localhost:9090
 - Grafana: http://localhost:3001
 
-Diagrams
+### Quick start – pull and run images (prod‑style)
 
-Architecture diagram:
-
-![Architecture](docs/diagrams/architecture.png)
-
-Pipeline diagram:
-
-![Pipeline](docs/diagrams/pipeline.png)
-
-Deployment flow:
-
-![Deployment flow](docs/diagrams/deployment-flow.png)
-
-Full-Stack & Software Engineering notes
-
-- Frontend: React (Vite) app in `frontend/`. Production build served by Nginx in the Docker image.
-- Backend: Spring Boot (Java 21) in `backend/` with layered architecture (controller → service → repository). Uses Spring Security and session-based auth.
-- Database: MongoDB (official image). Data volume is `mongo_data` in Compose.
-
-Engineering practices included
-
-- Automated CI: tests + builds run in `.github/workflows/ci.yml`.
-- Image versioning: CI tags images by commit SHA and `latest`, pushed to GHCR.
-- Infrastructure-as-code: `docker-compose.yml` describes the full local stack (app + monitoring).
-- Observability: Micrometer + Actuator expose `/actuator/prometheus` for Prometheus; Grafana dashboards pre-provisioned.
-- Health checks: deploy workflow polls `/api/health` to verify readiness.
-
-Run & Development Instructions
-
-1) Prerequisites
-
-- Java 21 (for local backend dev), Node 20+ (for frontend dev), Docker Desktop or Docker Engine + Compose.
-
-2) Run full stack with Docker (dev)
-
-```bash
-# build backend & frontend, start all services (dev env values)
-COMPOSE_ENV=dev docker compose up -d --build
-```
-
-3) Run only monitoring (if apps already running)
-
-```bash
-docker compose up -d prometheus grafana node-exporter
-```
-
-4) Fast deploy (when CI has published images)
+Assuming CI has already pushed images to GHCR:
 
 ```bash
 docker compose pull --ignore-pull-failures
 docker compose up -d --no-build --remove-orphans
 ```
 
-5) Frontend local dev
+This is what the deploy workflow does on the self‑hosted runner.
+
+### Start only monitoring (when app is already running)
 
 ```bash
-cd frontend
-npm ci
-npm run dev
-# open http://localhost:5173
+docker compose up -d prometheus grafana node-exporter
 ```
 
-6) Backend local dev
+---
+
+## Local development
+
+### Backend (Spring Boot)
+
+Prerequisite: Java 21 + Maven wrapper (already included).
+
+Run the backend locally:
 
 ```bash
 cd backend
 ./mvnw spring-boot:run
-# open http://localhost:8080/api
+# Backend: http://localhost:8080/api
 ```
 
-7) Run backend unit tests
+Run backend tests:
 
 ```bash
 cd backend
 ./mvnw test
 ```
 
-8) Grafana credentials & dashboards
+### Frontend (React + Vite)
 
-- Default admin: `admin` / `admin` — Grafana prompts to change on first login.
-- Dashboards are provisioned from [`grafana/dashboards`](grafana/dashboards) and mounted into Grafana via Compose.
+Prerequisite: Node.js 20+.
 
-Troubleshooting & common issues
-
-- cadvisor on macOS: removed from default compose due to cgroup mount issues. Use `node-exporter` and Prometheus for host metrics on Linux hosts.
-- If a service reports DOWN in Prometheus targets, open the endpoint directly (e.g., `curl -sSf http://localhost:8080/actuator/prometheus`).
-- To view logs:
+Run the frontend dev server:
 
 ```bash
+cd frontend
+npm ci
+npm run dev
+# Vite dev server: http://localhost:5173
+```
+
+---
+
+## CI/CD pipeline
+
+### Overview
+
+The project uses GitHub Actions to build, test, publish Docker images to GHCR, and then deploy them onto a self‑hosted runner with Docker.
+
+High‑level pipeline:
+
+![Pipeline](docs/diagrams/pipeline.png)
+
+### Workflows
+
+1. **CI workflow** – `.github/workflows/ci.yml`
+   - Runs on pushes and PRs.
+   - Builds and tests the backend (with a MongoDB service).
+   - Builds the frontend.
+   - Builds Docker images for backend and frontend.
+   - Pushes images to GitHub Container Registry (GHCR) with tags:
+     - `:sha-<commit>`
+     - `:latest`
+
+2. **Deploy workflow** – `.github/workflows/deploy-local-docker.yml`
+   - Triggered by `workflow_run` after CI completes on `main`.
+   - Runs on a **self‑hosted** runner labeled `local-docker` (same machine as Docker).
+   - Steps:
+     - `docker compose pull --ignore-pull-failures`
+     - `docker compose up -d --no-build --remove-orphans`
+     - Polls `http://localhost:8080/api/health` until the backend is healthy.
+
+### Self‑hosted runner
+
+To enable deployment from GitHub Actions to your local Docker host:
+
+1. In GitHub repo: **Settings → Actions → Runners**.
+2. Add a new runner, install it on your machine.
+3. Give it the label `local-docker`.
+4. Ensure Docker is installed and the runner has permission to run `docker` / `docker compose`.
+
+---
+
+## Monitoring & dashboards
+
+High‑level deployment + monitoring flow:
+
+![Deployment flow](docs/diagrams/deployment-flow.png)
+
+### Metrics
+
+- Backend exposes Prometheus metrics at `http://backend:8080/actuator/prometheus` (inside Docker) / `http://localhost:8080/actuator/prometheus` (from host).
+- Prometheus scrapes:
+  - `backend` service metrics.
+  - `node-exporter` (for host metrics, on supported platforms).
+
+### Grafana
+
+- URL: http://localhost:3001
+- Default credentials: `admin` / `admin` (Grafana will ask you to change this on first login).
+- Dashboards are pre‑provisioned from `grafana/dashboards/medical-system-overview.json`.
+  - CPU usage panels (app / host).
+  - Memory usage.
+  - HTTP request rate and latency for backend APIs.
+
+### Useful commands
+
+```bash
+# Validate docker-compose configuration
+docker compose config
+
+# Tail logs for key services
 docker compose logs backend --tail=200
 docker compose logs grafana --tail=200
 ```
 
-Configuration & secrets
+---
 
-- `GHCR_OWNER`, image tags and other environment variables are set via `.env.dev` / `.env.prod` and by GitHub Actions secrets for publishing.
+## Configuration & secrets
 
-CI/CD notes
+### Environment files
 
-- The CI workflow builds and tests both services, then the `docker-publish` job pushes images to GHCR.
-- The deploy workflow (`.github/workflows/deploy-local-docker.yml`) is triggered by `workflow_run` after CI completes on `main` and runs on a self-hosted runner labeled `local-docker`.
+The Compose stack uses env files for configuration:
 
-Contributing
+- `.env.dev` – development settings (e.g. image tags, Mongo URI, ports).
+- `.env.prod` – production‑like settings used by CI/CD.
 
-- Branch model: feature branches → PR to `develop` / `main` (your team convention).
-- Run tests and linters before opening PRs. Keep commits small and focused.
+`docker-compose.yml` loads the appropriate file via `env_file` based on `COMPOSE_ENV`.
 
-Want rendered images added? Done — diagrams are in `docs/diagrams`. If you'd like higher-fidelity PNGs or alternative layouts, I can regenerate them.
+### GitHub secrets / registry
 
+- `GHCR_OWNER` – owner/namespace for images in GHCR.
+- GitHub Actions must have permissions to push to GHCR.
+- Other sensitive values (if any) should be stored as GitHub Actions secrets, **not** committed to the repo.
 
-DevOps (overview)
-- The repo contains GitHub Actions CI that builds/tests backend and frontend, pushes images to a registry (GHCR), and a deploy workflow that runs on a self-hosted runner labeled `local-docker` to update your local Docker host.
-- Deploy workflow does: `docker compose pull` → `docker compose up -d --no-build` → health-checks (`/api/health`). Automatic deploys run only for `main`; manual dispatch remains available.
+---
 
-Self-hosted runner (summary)
-- Add a runner in the repository Settings → Actions → Runners and give it label `local-docker`.
-- The runner must run on the same machine as Docker to perform the deploy step.
+## Troubleshooting
 
-DevOps Documentation (architecture, pipeline, deployment)
-
-Architecture
-
-![Architecture](docs/diagrams/architecture.png)
-
-Pipeline (CI → Publish → CD)
-
-![Pipeline](docs/diagrams/pipeline.png)
-
-Deployment flow (sequence)
-
-![Deployment flow](docs/diagrams/deployment-flow.png)
-
-Monitoring & dashboards
-- Prometheus scrapes `backend` at `/actuator/prometheus` and `node-exporter` (if enabled). Grafana is provisioned to load `grafana/dashboards/medical-system-overview.json` with CPU, memory and API latency panels.
-
-Helpful commands
-- Validate compose: `docker compose config`
-- Quick deploy (pull only):
+- **cadvisor on macOS**: `cadvisor` is removed from the default stack because Docker Desktop on macOS does not expose the required cgroup mount points. Use `node-exporter` + Prometheus instead, or enable cadvisor only on Linux hosts.
+- **Prometheus target DOWN**: open the scraped endpoint directly, e.g.:
   ```bash
-  docker compose pull && docker compose up -d --no-build
+  curl -sSf http://localhost:8080/actuator/prometheus
   ```
-- Restart Grafana: `docker compose up -d --no-build --force-recreate grafana`
+- **Containers keep restarting**:
+  - Check logs for the service: `docker compose logs <service> --tail=200`.
+  - Verify ports not already in use on the host.
+- **Deploy workflow fails**:
+  - Confirm the self‑hosted runner is online and labeled `local-docker`.
+  - Make sure the runner machine has Docker installed and can run `docker compose` without sudo.
 
-Notes
-- Use `COMPOSE_ENV=dev` to select `.env.dev` for local development.
-- CI publishes images to GHCR; ensure `GHCR_OWNER` and registry permissions are configured in repository secrets for pushes.
-
-Want images embedded?
-- I can render the mermaid diagrams to PNG/SVG and add them to the repo so the README shows visual diagrams directly—shall I generate and commit them?
