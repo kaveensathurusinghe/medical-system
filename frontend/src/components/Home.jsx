@@ -123,7 +123,7 @@ const Home = () => {
                 <p className="mt-2 text-2xl font-bold text-slate-900">
                   {loadingStats ? '...' : formatCurrency(glanceStats.paymentTotal)}
                 </p>
-                <p className="mt-1 text-sm text-slate-500">Total amount paid today</p>
+                <p className="mt-1 text-sm text-slate-500">Total amount processed today</p>
             </div>
           </div>
         </motion.aside>
