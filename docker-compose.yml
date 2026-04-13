@@ -61,7 +61,6 @@ services:
     command:
       - --config.file=/etc/prometheus/prometheus.yml
     depends_on:
-      - cadvisor
       - backend
 
   grafana:
@@ -78,17 +77,7 @@ services:
     depends_on:
       - prometheus
 
-  cadvisor:
-    image: gcr.io/google-containers/cadvisor:latest
-    container_name: cadvisor
-    restart: unless-stopped
-    ports:
-      - "8081:8080"
-    volumes:
-      - /:/rootfs:ro
-      - /var/run:/var/run:ro
-      - /sys:/sys:ro
-      - /var/lib/docker/:/var/lib/docker:ro
+  # cadvisor removed due to macOS cgroup incompatibility (causes restarts)
 
   node-exporter:
     image: prom/node-exporter:latest
