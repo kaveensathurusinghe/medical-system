@@ -16,22 +16,110 @@ services:
       retries: 5
       start_period: 20s
 
-  backend:
+  profiles-service:
     env_file:
       - .env.${COMPOSE_ENV:-prod}
-    image: ghcr.io/${GHCR_OWNER:-kaveensathurusinghe}/medical-system-backend:${BACKEND_IMAGE_TAG:-latest}
+    image: ghcr.io/${GHCR_OWNER:-kaveensathurusinghe}/medical-system-profiles:${PROFILES_IMAGE_TAG:-latest}
     build:
-      context: ./backend
+      context: ./profiles-service
       dockerfile: Dockerfile
-    container_name: medicalsystem-backend
+    container_name: medicalsystem-profiles
     restart: unless-stopped
     environment:
       MONGODB_URI: ${MONGODB_URI:-mongodb://mongodb:27017/medicalsystem}
     depends_on:
       mongodb:
         condition: service_healthy
+      appointments-service:
+        condition: service_started
+      records-billing-service:
+        condition: service_started
+      keycloak:
+        condition: service_started
+    expose:
+      - "8084"
+
+  records-billing-service:
+    env_file:
+      - .env.${COMPOSE_ENV:-prod}
+    image: ghcr.io/${GHCR_OWNER:-kaveensathurusinghe}/medical-system-records-billing:${RECORDS_BILLING_IMAGE_TAG:-latest}
+    build:
+      context: ./records-billing-service
+      dockerfile: Dockerfile
+    container_name: medicalsystem-records-billing
+    restart: unless-stopped
+    environment:
+      MONGODB_URI: ${MONGODB_URI:-mongodb://mongodb:27017/medicalsystem}
+    depends_on:
+      mongodb:
+        condition: service_healthy
+      appointments-service:
+        condition: service_started
+      keycloak:
+        condition: service_started
+    expose:
+      - "8085"
+
+  keycloak:
+    image: quay.io/keycloak/keycloak:21.1.1
+    container_name: medicalsystem-keycloak
+    environment:
+      - KEYCLOAK_ADMIN=admin
+      - KEYCLOAK_ADMIN_PASSWORD=admin
+    # start in dev mode and import any realm files under /opt/keycloak/data/import
+    command: start-dev --import-realm
+    ports:
+      - "8082:8080"
+    volumes:
+      - ./keycloak/realm-export.json:/opt/keycloak/data/import/realm-export.json:ro
+
+  auth-service:
+    build:
+      context: .
+      dockerfile: auth-service/Dockerfile
+    image: ghcr.io/${GHCR_OWNER:-kaveensathurusinghe}/medical-system-auth:${AUTH_IMAGE_TAG:-latest}
+    container_name: medicalsystem-auth
+    restart: unless-stopped
+    environment:
+      - SPRING_PROFILES_ACTIVE=default
+      - KEYCLOAK_BASE_URL=http://keycloak:8080
+      - KEYCLOAK_REALM=medicalsystem
+      - KEYCLOAK_ADMIN_REALM=master
+      - KEYCLOAK_ADMIN_CLIENT_ID=admin-cli
+      - KEYCLOAK_ADMIN_USERNAME=admin
+      - KEYCLOAK_ADMIN_PASSWORD=admin
+    ports:
+      - "8081:8081"
+
+  appointments-service:
+    build:
+      context: ./appointments-service
+      dockerfile: Dockerfile
+    image: ghcr.io/${GHCR_OWNER:-kaveensathurusinghe}/medical-system-appointments:${APPTS_IMAGE_TAG:-latest}
+    container_name: medicalsystem-appointments
+    restart: unless-stopped
+    environment:
+      MONGODB_URI: ${MONGODB_URI:-mongodb://mongodb:27017/medicalsystem}
+    depends_on:
+      mongodb:
+        condition: service_healthy
+    expose:
+      - "8083"
+
+  gateway:
+    image: nginx:alpine
+    container_name: medicalsystem-gateway
+    restart: unless-stopped
     ports:
       - "8080:8080"
+    volumes:
+      - ./gateway/nginx.conf:/etc/nginx/conf.d/default.conf:ro
+    depends_on:
+      - profiles-service
+      - records-billing-service
+      - appointments-service
+      - auth-service
+      - keycloak
 
   frontend:
     env_file:
@@ -43,7 +131,10 @@ services:
     container_name: medicalsystem-frontend
     restart: unless-stopped
     depends_on:
-      - backend
+      - profiles-service
+      - records-billing-service
+      - appointments-service
+      - auth-service
     ports:
       - "3000:80"
  
@@ -61,7 +152,10 @@ services:
     command:
       - --config.file=/etc/prometheus/prometheus.yml
     depends_on:
-      - backend
+      - profiles-service
+      - records-billing-service
+      - appointments-service
+      - auth-service
 
   grafana:
     image: grafana/grafana:9.4.7

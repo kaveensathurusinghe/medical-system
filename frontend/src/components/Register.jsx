@@ -21,10 +21,7 @@ const Register = () => {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
-  const endpoint = useMemo(
-    () => (userType === 'patient' ? '/auth/register/patient' : '/auth/register/doctor'),
-    [userType],
-  );
+  const endpoint = useMemo(() => '/auth/register', []);
 
   useEffect(() => {
     const fetchCategories = async () => {
@@ -49,21 +46,18 @@ const Register = () => {
     setLoading(true);
 
     try {
-      const payload = {
-        name: formData.name,
-        email: formData.email,
+      // auth-service expects { username, password, fullName, role }
+      const authPayload = {
+        username: formData.email,
         password: formData.password,
-        phone: formData.phone,
+        fullName: formData.name,
+        role: userType === 'patient' ? 'PATIENT' : 'DOCTOR',
       };
 
-      if (userType === 'patient') {
-        payload.age = Number(formData.age);
-        payload.gender = formData.gender;
-      } else {
-        payload.specialization = formData.specialization;
-      }
+      // Register user with auth-service
+      await api.post(endpoint, authPayload);
 
-      await api.post(endpoint, payload);
+      // TODO: create domain-specific doctor/patient record in backend after successful auth registration
       navigate('/login');
     } catch (err) {
       const message = err?.response?.data?.content || err?.response?.data?.message || 'Registration failed';

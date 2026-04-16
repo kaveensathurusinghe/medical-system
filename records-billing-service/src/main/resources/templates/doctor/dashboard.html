@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Doctor's Appointments</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        html, body {
+            height: 100%;
+            margin: 0;
+            padding: 0;
+        }
+
+        body::before {
+            content: "";
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: url('/images/background.jpg');
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
+            filter: blur(5px);
+            z-index: -1;
+        }
+
+        .content-container {
+            background-color: rgba(255, 255, 255, 0.35);
+            border-radius: 15px;
+            padding: 30px;
+            margin-top: 30px;
+            position: relative;
+            z-index: 1;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+        }
+
+        .appointment-card {
+            border-left: 5px solid;
+            border-radius: 5px;
+            padding: 15px;
+            margin-bottom: 15px;
+            background-color: white;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .urgency-5 { border-left-color: #dc3545; }
+        .urgency-4 { border-left-color: #fd7e14; }
+        .urgency-3 { border-left-color: #ffc107; }
+        .urgency-2 { border-left-color: #0d6efd; }
+        .urgency-1 { border-left-color: #6c757d; }
+
+        .urgency-badge {
+            font-size: 0.8rem;
+            padding: 3px 8px;
+            border-radius: 10px;
+        }
+
+        .sorting-buttons {
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+<div th:replace="~{doctor/navbar :: navbar(doctor=${doctor}, activeTab='dashboard')}"></div>
+
+<div class="container content-container">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>My Scheduled Appointments</h2>
+        <div class="sorting-buttons">
+            <a th:href="@{/appointments/doctor}" class="btn btn-outline-primary btn-sm">
+                <i class="fas fa-sort-amount-up-alt me-1"></i> Sort by Urgency
+            </a>
+            <a th:href="@{/appointments/doctor/sorted-by-time}" class="btn btn-outline-primary btn-sm ms-2">
+                <i class="fas fa-clock me-1"></i> Sort by Time
+            </a>
+        </div>
+    </div>
+
+    <!-- Filter appointments to only show scheduled ones -->
+    <div th:with="scheduledAppointments=${appointments.?[status == 'SCHEDULED']}">
+        <div class="alert alert-info" th:if="${scheduledAppointments.isEmpty()}">
+            You have no scheduled appointments.
+        </div>
+
+        <div th:each="appointment : ${scheduledAppointments}">
+            <div th:classappend="'urgency-' + ${appointment.urgencyLevel}" class="appointment-card">
+                <div class="d-flex justify-content-between align-items-start mb-2">
+                    <h5>
+                        <!-- Get patient name from the patientNameMap provided by the controller -->
+                        <span th:text="'Appointment with ' + ${patientNameMap.get(appointment.appointmentId)}"></span>
+                    </h5>
+                    <span th:class="${appointment.urgencyLevel == 5 ? 'bg-danger' :
+                    (appointment.urgencyLevel == 4 ? 'bg-warning' :
+                    (appointment.urgencyLevel == 3 ? 'bg-info' :
+                    (appointment.urgencyLevel == 2 ? 'bg-primary' : 'bg-secondary')))}"
+                          class="urgency-badge text-white">
+                        Urgency: <span th:text="${appointment.urgencyLevel}"></span>/5
+                    </span>
+                </div>
+
+                <div class="mb-3">
+                    <p><strong>Date & Time:</strong>
+                        <span th:text="${#temporals.format(appointment.appointmentTime, 'MMMM dd, yyyy hh:mm a')}"></span>
+                    </p>
+                    <p><strong>Reason:</strong> <span th:text="${appointment.reason}"></span></p>
+                </div>
+
+                <div class="d-flex gap-2">
+                    <a th:href="@{'/appointments/update/' + ${appointment.appointmentId}}"
+                       class="btn btn-outline-primary btn-sm">
+                        <i class="fas fa-edit me-1"></i> Update
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

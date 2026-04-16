@@ -2,9 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Calendar, Clock, Trash2 } from 'lucide-react';
 import api from '../../services/api';
+import { resolveUserId } from '../../utils/sessionUser';
 
 const DoctorView = () => {
-    const [doctorId, setDoctorId] = useState(localStorage.getItem('userId') || '');
+    const [doctorId, setDoctorId] = useState('');
     const [timeslots, setTimeslots] = useState([]);
     const [loading, setLoading] = useState(true);
     const [submitting, setSubmitting] = useState(false);
@@ -36,21 +37,7 @@ const DoctorView = () => {
     useEffect(() => {
         const bootstrap = async () => {
             try {
-                let resolvedDoctorId = localStorage.getItem('userId');
-                if (!resolvedDoctorId) {
-                    const me = await api.get('/auth/me');
-                    const role = me?.data?.role;
-                    const userId = me?.data?.userId;
-
-                    if (role !== 'ROLE_DOCTOR' || !userId) {
-                        setError('Please sign in as a doctor to manage timeslots.');
-                        setLoading(false);
-                        return;
-                    }
-
-                    resolvedDoctorId = String(userId);
-                    localStorage.setItem('userId', resolvedDoctorId);
-                }
+                const resolvedDoctorId = String(await resolveUserId('ROLE_DOCTOR'));
 
                 setDoctorId(resolvedDoctorId);
                 await fetchTimeslots(resolvedDoctorId);

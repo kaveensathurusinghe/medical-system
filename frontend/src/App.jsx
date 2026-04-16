@@ -55,62 +55,33 @@ const roleHomeRoute = {
   ROLE_PATIENT: '/patient/dashboard',
 };
 
-const RequireRole = ({ allowedRoles, children, loginPath = '/login' }) => {
-  const [resolvedRole, setResolvedRole] = React.useState(null);
-  const [checkingAuth, setCheckingAuth] = React.useState(true);
+const APP_ROLES = ['ADMIN', 'DOCTOR', 'PATIENT'];
 
-  React.useEffect(() => {
-    let active = true;
+const resolveRoleFromToken = (token) => {
+  if (!token) return null;
+  try {
+    const payload = JSON.parse(atob(token.split('.')[1]));
+    const roles = payload?.realm_access?.roles;
+    if (!Array.isArray(roles)) return null;
 
-    const checkSession = async () => {
-      try {
-        const response = await api.get('/auth/me');
-        const role = response?.data?.role;
-
-        if (!active) {
-          return;
-        }
-
-        if (role) {
-          localStorage.setItem('role', role);
-          const userId = response?.data?.userId;
-          if (userId !== null && userId !== undefined) {
-            localStorage.setItem('userId', String(userId));
-          } else {
-            localStorage.removeItem('userId');
-          }
-          setResolvedRole(role);
-        } else {
-          localStorage.removeItem('token');
-          localStorage.removeItem('role');
-          localStorage.removeItem('userId');
-          setResolvedRole(null);
-        }
-      } catch (error) {
-        if (!active) {
-          return;
-        }
-        localStorage.removeItem('token');
-        localStorage.removeItem('role');
-        localStorage.removeItem('userId');
-        setResolvedRole(null);
-      } finally {
-        if (active) {
-          setCheckingAuth(false);
-        }
+    for (const preferred of APP_ROLES) {
+      const found = roles.find((r) => String(r).toUpperCase() === preferred);
+      if (found) {
+        return `ROLE_${preferred}`;
       }
-    };
-
-    checkSession();
-
-    return () => {
-      active = false;
-    };
-  }, []);
-
-  if (checkingAuth) {
+    }
+    return null;
+  } catch (e) {
     return null;
   }
+};
+
+const RequireRole = ({ allowedRoles, children, loginPath = '/login' }) => {
+  const [resolvedRole] = React.useState(() => {
+    const role = localStorage.getItem('role');
+    if (role) return role;
+    return resolveRoleFromToken(localStorage.getItem('token'));
+  });
 
   if (!resolvedRole) {
     return <Navigate to={loginPath} replace />;

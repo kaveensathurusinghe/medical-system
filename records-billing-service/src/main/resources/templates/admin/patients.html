@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Patients Management</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body::before {
+            content: "";
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: url('/images/background.jpg');
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
+            filter: blur(5px);
+            z-index: -1;
+        }
+        .card {
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        .table-responsive {
+            border-radius: 10px;
+            overflow: hidden;
+        }
+        .action-btn {
+            width: 30px;
+            height: 30px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0;
+        }
+        .gender-badge {
+            font-weight: normal;
+            text-transform: capitalize;
+        }
+        .male-badge {
+            background-color: #0d6efd;
+            color: white;
+        }
+        .female-badge {
+            background-color: #d63384;
+            color: white;
+        }
+        .alert-success {
+            background-color: #d1e7dd;
+            border-color: #badbcc;
+            color: #0f5132;
+        }
+        .alert-error {
+            background-color: #f8d7da;
+            border-color: #f5c2c7;
+            color: #842029;
+        }
+    </style>
+</head>
+<body>
+<div th:replace="~{admin/navbar :: navbar('patients')}"></div>
+
+<div class="container py-4">
+    <!-- Success/Error Messages -->
+    <div th:if="${message}" th:class="${message.type == 'SUCCESS'} ? 'alert alert-success alert-dismissible fade show' : 'alert alert-error alert-dismissible fade show'"
+         role="alert">
+        <span th:text="${message.content}"></span>
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="mb-0"><i class="fas fa-user-injured me-2"></i>Patients Management</h2>
+        <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addPatientModal">
+            <i class="fas fa-plus me-2"></i>Add Patient
+        </button>
+    </div>
+
+    <div class="card">
+        <div class="card-header bg-primary text-white">
+            <h5 class="mb-0"><i class="fas fa-list me-2"></i>All Patients</h5>
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                    <thead class="table-light">
+                    <tr>
+                        <th>ID</th>
+                        <th>Name</th>
+                        <th>Age</th>
+                        <th>Gender</th>
+                        <th>Contact</th>
+                        <th>Email</th>
+                        <th>Actions</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr th:each="patient : ${patients}">
+                        <td th:text="${patient.patientId}">PAT001</td>
+                        <td th:text="${patient.name}">John Doe</td>
+                        <td th:text="${patient.age}">30</td>
+                        <td>
+                            <span th:class="${patient.gender == 'Male'} ? 'badge male-badge gender-badge' : 'badge female-badge gender-badge'"
+                                  th:text="${patient.gender}">Male</span>
+                        </td>
+                        <td th:text="${patient.phone}">+94123456789</td>
+                        <td th:text="${patient.email}">john@example.com</td>
+                        <td>
+                            <button class="btn btn-sm btn-outline-danger action-btn"
+                                    data-bs-toggle="modal"
+                                    data-bs-target="#deletePatientModal"
+                                    th:attr="data-patient-id=${patient.patientId}, data-patient-name=${patient.name}"
+                                    title="Delete">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </td>
+                    </tr>
+                    <tr th:if="${#lists.isEmpty(patients)}">
+                        <td colspan="7" class="text-center text-muted py-4">No patients found</td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Patient Confirmation Modal -->
+<div class="modal fade" id="deletePatientModal" tabindex="-1" aria-labelledby="deletePatientModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title" id="deletePatientModalLabel">Confirm Patient Deletion</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>Are you sure you want to permanently delete the patient account for <span id="patientNameToDelete" class="fw-bold"></span>?</p>
+                <p class="text-danger">This action cannot be undone and all associated data will be lost.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <form id="deletePatientForm" method="post">
+                    <input type="hidden" name="_csrf" th:value="${_csrf.token}"/>
+                    <button type="submit" class="btn btn-danger">
+                        <i class="fas fa-trash-alt me-1"></i> Delete Permanently
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    // Enable tooltips
+    var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
+    var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+        return new bootstrap.Tooltip(tooltipTriggerEl)
+    })
+
+    // Handle delete modal
+    var deletePatientModal = document.getElementById('deletePatientModal')
+    deletePatientModal.addEventListener('show.bs.modal', function (event) {
+        var button = event.relatedTarget
+        var patientId = button.getAttribute('data-patient-id')
+        var patientName = button.getAttribute('data-patient-name')
+
+        var modalTitle = deletePatientModal.querySelector('.modal-title')
+        var patientNameSpan = deletePatientModal.querySelector('#patientNameToDelete')
+        var deleteForm = deletePatientModal.querySelector('#deletePatientForm')
+
+        patientNameSpan.textContent = patientName
+        deleteForm.action = '/admin/patients/delete/' + patientId
+    })
+</script>
+</body>
+</html>

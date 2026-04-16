@@ -4,11 +4,15 @@ export const resolveUserId = async (expectedRole) => {
   const storedRole = localStorage.getItem('role');
   const storedUserId = localStorage.getItem('userId');
 
-  if (storedRole === expectedRole && storedUserId) {
-    return Number(storedUserId);
+  const numericStoredUserId = storedUserId && /^\d+$/.test(storedUserId)
+    ? Number(storedUserId)
+    : null;
+
+  if (storedRole === expectedRole && numericStoredUserId !== null) {
+    return numericStoredUserId;
   }
 
-  const response = await api.get('/auth/me');
+  const response = await api.get('/session/me');
   const role = response?.data?.role;
   const userId = response?.data?.userId;
 

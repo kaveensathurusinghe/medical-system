@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import api from '../../services/api';
 import { motion } from 'framer-motion';
+import { resolveUserId } from '../../utils/sessionUser';
 
 const Book = () => {
     const location = useLocation();
@@ -142,20 +143,7 @@ const Book = () => {
     }, [selectedDoctorId]);
 
     const resolveLoggedInPatientId = async () => {
-        const storedUserId = localStorage.getItem('userId');
-        if (storedUserId) {
-            return storedUserId;
-        }
-
-        const response = await api.get('/auth/me');
-        const userId = response?.data?.userId;
-        const role = response?.data?.role;
-
-        if (!userId || role !== 'ROLE_PATIENT') {
-            throw new Error('Please sign in as a patient to book appointments.');
-        }
-
-        localStorage.setItem('userId', String(userId));
+        const userId = await resolveUserId('ROLE_PATIENT');
         return String(userId);
     };
 

@@ -1,6 +1,6 @@
 # Full-Stack DevOps CI/CD Pipeline with Docker & Self-Hosted Runner
 
-Full‑stack medical management system built with a React (Vite) frontend, Spring Boot backend, and MongoDB, packaged for local Docker and wired with GitHub Actions CI/CD and monitoring.
+Full-stack medical management system built with a React (Vite) frontend, multiple Spring Boot microservices, Keycloak SSO, and MongoDB, packaged for local Docker and wired with GitHub Actions CI/CD and monitoring.
 
 ---
 
@@ -25,8 +25,9 @@ Full‑stack medical management system built with a React (Vite) frontend, Sprin
 This repository contains:
 
 - A React (Vite) SPA in `frontend/` for patients, doctors, and admins.
-- A Spring Boot (Java 21) API in `backend/` using MongoDB.
-- A Docker Compose stack that runs the app + MongoDB + Prometheus + Grafana locally.
+- Spring Boot (Java 21) microservices in `profiles-service/`, `records-billing-service/`, `appointments-service/`, and `auth-service/`.
+- Keycloak realm configuration in `keycloak/` for OIDC authentication.
+- A Docker Compose stack that runs frontend + API services + Keycloak + MongoDB + Prometheus + Grafana locally.
 - GitHub Actions workflows for CI (build & test) and CD (deploy to a self‑hosted Docker runner).
 
 DevOps‑oriented features:
@@ -50,18 +51,20 @@ High‑level architecture of the system running via Docker Compose:
 ![Architecture](docs/diagrams/architecture.png)
 
 - Browser → React (Vite) frontend served by Nginx (in the `frontend` container).
-- Frontend → Spring Boot backend (`backend` container).
-- Backend → MongoDB database (`mongodb` container).
-- Backend exposes metrics to Prometheus, visualized in Grafana.
+- Frontend Nginx → path-based API routing to `profiles-service`, `records-billing-service`, `appointments-service`, and `auth-service`.
+- Keycloak provides SSO/OIDC tokens consumed by all API services.
+- API services → MongoDB database (`mongodb` container).
+- API services expose metrics to Prometheus, visualized in Grafana.
 
 ---
 
 ## Tech stack
 
 - **Frontend**: React, Vite, Nginx (for production container image).
-- **Backend**: Spring Boot (Java 21), Spring Data MongoDB, Spring Security.
+- **Backend services**: Spring Boot (Java 21), Spring Data MongoDB, Spring Security OAuth2 Resource Server.
+- **Identity**: Keycloak (OIDC, realm roles).
 - **Database**: MongoDB official Docker image.
-- **Build tools**: Maven (backend), npm (frontend).
+- **Build tools**: Maven (Java services), npm (frontend).
 - **Container / Orchestration**: Docker, Docker Compose.
 - **CI/CD**: GitHub Actions, GitHub Container Registry (GHCR).
 - **Observability**: Spring Boot Actuator, Micrometer Prometheus registry, Prometheus, Grafana.
@@ -72,23 +75,29 @@ High‑level architecture of the system running via Docker Compose:
 
 Top‑level layout (simplified):
 
-- `backend/` – Spring Boot application (Java 21, Maven).
+- `profiles-service/` – profile, admin, session, doctor/patient category endpoints.
+- `records-billing-service/` – medical records and payments endpoints.
+- `appointments-service/` – appointments and timeslot endpoints.
+- `auth-service/` – registration and authentication helper service.
+- `keycloak/` – realm export for local SSO.
+- `gateway/` – optional API edge Nginx config.
 - `frontend/` – React (Vite) SPA.
-- `docker-compose.yml` – local stack (app + MongoDB + monitoring).
+- `docker-compose.yml` – local stack (frontend + API services + identity + DB + monitoring).
 - `prometheus/` – Prometheus configuration.
 - `grafana/` – Grafana provisioning (datasource + dashboards).
 - `docs/diagrams/` – PNG diagrams used in this README.
 
-Backend layout (simplified):
+Java services layout (simplified):
 
-- `backend/src/main/java/com/medicalsystem/...` – controllers, services, repositories, config.
-- `backend/src/main/resources/application.properties` – Spring Boot configuration.
-- `backend/pom.xml` – backend dependencies and plugins.
+- `profiles-service/src/main/java/com/medicalsystem/...` – profile domain API.
+- `records-billing-service/src/main/java/com/medicalsystem/...` – records and billing domain API.
+- `appointments-service/src/main/java/com/medicalsystem/appointments/...` – appointment domain API.
+- `auth-service/src/main/java/com/medicalsystem/auth/...` – auth API.
 
 Frontend layout (simplified):
 
 - `frontend/src/components/...` – React components for patients, doctors, admin.
-- `frontend/src/services/api.js` – API helper for calling the backend.
+- `frontend/src/services/api.js` – API helper for calling proxied `/api/*` routes.
 
 ---
 
@@ -105,7 +114,7 @@ Environment selection is driven by `COMPOSE_ENV`:
 
 ### Quick start – development stack
 
-Build backend and frontend locally, then start everything:
+Build service and frontend images locally, then start everything:
 
 ```bash
 COMPOSE_ENV=dev docker compose up -d --build
@@ -114,7 +123,8 @@ COMPOSE_ENV=dev docker compose up -d --build
 Once up:
 
 - Frontend: http://localhost:3000
-- Backend API: http://localhost:8080/api
+- Gateway API edge: http://localhost:8080/api
+- Keycloak: http://localhost:8082
 - Prometheus: http://localhost:9090
 - Grafana: http://localhost:3001
 
@@ -139,23 +149,26 @@ docker compose up -d prometheus grafana node-exporter
 
 ## Local development
 
-### Backend (Spring Boot)
+### Java services (Spring Boot)
 
-Prerequisite: Java 21 + Maven wrapper (already included).
+Prerequisite: Java 21 + Maven.
 
-Run the backend locally:
+Run services locally (examples):
 
 ```bash
-cd backend
-./mvnw spring-boot:run
-# Backend: http://localhost:8080/api
+cd profiles-service && ./mvnw spring-boot:run
+cd ../records-billing-service && ./mvnw spring-boot:run
+mvn -f appointments-service/pom.xml spring-boot:run
+mvn -f auth-service/pom.xml spring-boot:run
 ```
 
-Run backend tests:
+Run tests (examples):
 
 ```bash
-cd backend
-./mvnw test
+cd profiles-service && ./mvnw test
+cd ../records-billing-service && ./mvnw test
+mvn -f appointments-service/pom.xml test
+mvn -f auth-service/pom.xml test
 ```
 
 ### Frontend (React + Vite)
@@ -177,7 +190,7 @@ npm run dev
 
 ### Overview
 
-The project uses GitHub Actions to build, test, publish Docker images to GHCR, and then deploy them onto a self‑hosted runner with Docker.
+The project uses GitHub Actions to build, test, publish Docker images to GHCR, and then deploy them onto a self-hosted runner with Docker.
 
 High‑level pipeline:
 
@@ -187,9 +200,9 @@ High‑level pipeline:
 
 1. **CI workflow** – `.github/workflows/ci.yml`
    - Runs on pushes and PRs.
-   - Builds and tests the backend (with a MongoDB service).
+  - Builds and tests Java microservices (with a MongoDB service).
    - Builds the frontend.
-   - Builds Docker images for backend and frontend.
+  - Builds Docker images for profiles, records-billing, appointments, auth, and frontend.
    - Pushes images to GitHub Container Registry (GHCR) with tags:
      - `:sha-<commit>`
      - `:latest`
@@ -200,7 +213,7 @@ High‑level pipeline:
    - Steps:
      - `docker compose pull --ignore-pull-failures`
      - `docker compose up -d --no-build --remove-orphans`
-     - Polls `http://localhost:8080/api/health` until the backend is healthy.
+     - Polls public/profile endpoints and Keycloak discovery until the stack is healthy.
 
 ### Self‑hosted runner
 
@@ -221,9 +234,9 @@ High‑level deployment + monitoring flow:
 
 ### Metrics
 
-- Backend exposes Prometheus metrics at `http://backend:8080/actuator/prometheus` (inside Docker) / `http://localhost:8080/actuator/prometheus` (from host).
+- Service metrics are exposed at `/actuator/prometheus` inside each API service container.
 - Prometheus scrapes:
-  - `backend` service metrics.
+  - `profiles-service`, `records-billing-service`, `appointments-service`, `auth-service`.
   - `node-exporter` (for host metrics, on supported platforms).
 
 ### Grafana
@@ -231,9 +244,9 @@ High‑level deployment + monitoring flow:
 - URL: http://localhost:3001
 - Default credentials: `admin` / `admin` (Grafana will ask you to change this on first login).
 - Dashboards are pre‑provisioned from `grafana/dashboards/medical-system-overview.json`.
-  - CPU usage panels (app / host).
+  - CPU usage panels (host).
   - Memory usage.
-  - HTTP request rate and latency for backend APIs.
+  - HTTP request latency across API services.
 
 ### Useful commands
 
@@ -242,7 +255,8 @@ High‑level deployment + monitoring flow:
 docker compose config
 
 # Tail logs for key services
-docker compose logs backend --tail=200
+docker compose logs profiles-service --tail=200
+docker compose logs records-billing-service --tail=200
 docker compose logs grafana --tail=200
 ```
 
@@ -290,7 +304,7 @@ A few DevOps‑oriented views for this project:
 - **cadvisor on macOS**: `cadvisor` is removed from the default stack because Docker Desktop on macOS does not expose the required cgroup mount points. Use `node-exporter` + Prometheus instead, or enable cadvisor only on Linux hosts.
 - **Prometheus target DOWN**: open the scraped endpoint directly, e.g.:
   ```bash
-  curl -sSf http://localhost:8080/actuator/prometheus
+  curl -sSf http://localhost:3000/api/health
   ```
 - **Containers keep restarting**:
   - Check logs for the service: `docker compose logs <service> --tail=200`.

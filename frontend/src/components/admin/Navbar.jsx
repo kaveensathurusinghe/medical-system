@@ -2,6 +2,7 @@ import React from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
 import { LayoutDashboard, Stethoscope, Users, CalendarDays, CreditCard } from 'lucide-react';
 import api from '../../services/api';
+import keycloakService from '../../keycloak';
 
 const links = [
   { to: '/admin/dashboard', label: 'Dashboard', icon: LayoutDashboard },
@@ -16,7 +17,7 @@ const Navbar = () => {
 
   const handleLogout = async () => {
     try {
-      await api.post('/auth/logout');
+      await keycloakService.logout({ redirectUri: window.location.origin });
     } catch (error) {
       console.error('Admin logout failed', error);
     } finally {

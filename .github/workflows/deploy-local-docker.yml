@@ -29,6 +29,8 @@ jobs:
     runs-on:
       - self-hosted
       - local-docker
+    env:
+      GHCR_OWNER: ${{ github.repository_owner }}
 
     steps:
       - name: Checkout CI commit
@@ -54,18 +56,33 @@ jobs:
       - name: Show running services
         run: docker compose ps
 
-      - name: Wait for backend
+      - name: Wait for stack endpoints
         run: |
-          echo "Waiting for backend to become healthy..."
-          for i in 1 2 3 4 5 6 7 8 9 10; do
+          echo "Waiting for frontend API, gateway API, and Keycloak to become healthy..."
+          for i in $(seq 1 30); do
+            FRONTEND_OK=0
+            GATEWAY_OK=0
+            KEYCLOAK_OK=0
+
+            if curl -sSf http://localhost:3000/api/public/today-at-a-glance -o /dev/null; then
+              FRONTEND_OK=1
+            fi
             if curl -sSf http://localhost:8080/api/health -o /dev/null; then
-              echo "Backend healthy"
+              GATEWAY_OK=1
+            fi
+            if curl -sSf http://localhost:8082/realms/medicalsystem/.well-known/openid-configuration -o /dev/null; then
+              KEYCLOAK_OK=1
+            fi
+
+            if [ "$FRONTEND_OK" -eq 1 ] && [ "$GATEWAY_OK" -eq 1 ] && [ "$KEYCLOAK_OK" -eq 1 ]; then
+              echo "Stack healthy"
               exit 0
             fi
+
             sleep 3
-            echo "Retry $i/10..."
+            echo "Retry $i/30..."
           done
-          echo "Backend did not become healthy in time" >&2
+          echo "Stack did not become healthy in time" >&2
           exit 1
 
       - name: Prune dangling images

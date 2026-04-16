@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import api from '../../services/api';
+import keycloakService from '../../keycloak';
 
 const AdminLogin = () => {
   const navigate = useNavigate();
@@ -10,40 +10,21 @@ const AdminLogin = () => {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
+  useEffect(() => {
+    const role = localStorage.getItem('role');
+    if (role === 'ROLE_ADMIN') {
+      navigate('/admin/dashboard');
+    }
+  }, [navigate]);
+
   const handleLogin = async (e) => {
-    e.preventDefault();
+    e && e.preventDefault();
     setError('');
     setLoading(true);
-
     try {
-      const response = await api.post('/auth/login', {
-        username: email,
-        email,
-        password,
-      });
-
-      const token = response?.data?.token;
-      const role = response?.data?.role;
-      const userId = response?.data?.userId;
-
-      if (!token || role !== 'ROLE_ADMIN') {
-        throw new Error('Only admin users can sign in here.');
-      }
-
-      localStorage.setItem('token', token);
-      localStorage.setItem('role', role);
-      if (userId !== null && userId !== undefined) {
-        localStorage.setItem('userId', String(userId));
-      } else {
-        localStorage.removeItem('userId');
-      }
-      navigate('/admin/dashboard');
+      await keycloakService.login();
     } catch (err) {
-      localStorage.removeItem('token');
-      localStorage.removeItem('role');
-      localStorage.removeItem('userId');
-      const message = err?.response?.data?.content || err?.message || 'Admin login failed';
-      setError(message);
+      setError('Login failed');
     } finally {
       setLoading(false);
     }
@@ -62,45 +43,18 @@ const AdminLogin = () => {
 
         {error && <p className="mt-4 rounded-xl bg-red-50 px-3 py-2 text-sm text-red-700">{error}</p>}
 
-        <form onSubmit={handleLogin} className="mt-6 space-y-4">
-          <div>
-            <label htmlFor="email" className="mb-1 block text-sm font-semibold text-slate-700">
-              Admin Email
-            </label>
-            <input
-              id="email"
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className="w-full rounded-xl border border-slate-200 px-3 py-2.5 outline-none ring-cyan-200 transition focus:ring"
-              required
-            />
-          </div>
-
-          <div>
-            <label htmlFor="password" className="mb-1 block text-sm font-semibold text-slate-700">
-              Password
-            </label>
-            <input
-              id="password"
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="w-full rounded-xl border border-slate-200 px-3 py-2.5 outline-none ring-cyan-200 transition focus:ring"
-              required
-            />
-          </div>
-
+        <div className="mt-6 space-y-4">
           <motion.button
-            type="submit"
+            type="button"
+            onClick={handleLogin}
             className="mt-2 w-full rounded-xl bg-slate-900 px-4 py-3 font-semibold text-white transition hover:bg-slate-800 disabled:opacity-60"
             whileHover={{ scale: 1.01 }}
             whileTap={{ scale: 0.99 }}
             disabled={loading}
           >
-            {loading ? 'Signing In...' : 'Login as Admin'}
+            {loading ? 'Redirecting...' : 'Sign in with SSO'}
           </motion.button>
-        </form>
+        </div>
 
         <p className="mt-6 text-sm text-slate-600">
           Staff or patient account?{' '}

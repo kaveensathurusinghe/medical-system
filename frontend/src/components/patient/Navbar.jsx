@@ -2,6 +2,7 @@ import React from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
 import { Activity, CalendarDays, CalendarPlus, CreditCard, FileText, PencilLine } from 'lucide-react';
 import api from '../../services/api';
+import keycloakService from '../../keycloak';
 
 const links = [
   { to: '/patient/dashboard', label: 'Dashboard', icon: Activity },
@@ -17,7 +18,7 @@ const Navbar = () => {
 
   const handleLogout = async () => {
     try {
-      await api.post('/auth/logout');
+      await keycloakService.logout({ redirectUri: window.location.origin });
     } catch (error) {
       console.error('Patient logout failed', error);
     } finally {
