@@ -16,7 +16,6 @@ import java.util.Date;
 public class AuthService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
-    private final KeycloakAdminService keycloakAdminService;
 
     @Value("${jwt.secret}")
     private String jwtSecret;
@@ -24,10 +23,9 @@ public class AuthService {
     @Value("${jwt.expiration}")
     private long jwtExpirationMillis;
 
-    public AuthService(UserRepository userRepository, PasswordEncoder passwordEncoder, KeycloakAdminService keycloakAdminService) {
+    public AuthService(UserRepository userRepository, PasswordEncoder passwordEncoder) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
-        this.keycloakAdminService = keycloakAdminService;
     }
 
     public void register(RegisterRequest req) {
@@ -46,8 +44,7 @@ public class AuthService {
             throw new IllegalArgumentException("Username already exists");
         }
 
-        // Keep Keycloak as the source of truth for login credentials and roles.
-        keycloakAdminService.createUserWithRole(username, req.getPassword(), fullName, role);
+        // Persist user locally (auth-service acts as the identity provider now)
 
         User u = new User();
         u.setUsername(username);

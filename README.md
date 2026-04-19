@@ -1,6 +1,6 @@
 # Full-Stack DevOps CI/CD Pipeline with Docker & Self-Hosted Runner
 
-Full-stack medical management system built with a React (Vite) frontend, multiple Spring Boot microservices, Keycloak SSO, and MongoDB, packaged for local Docker and wired with GitHub Actions CI/CD and monitoring.
+Full-stack medical management system built with a React (Vite) frontend, multiple Spring Boot microservices, JWT-based auth (auth-service), and MongoDB, packaged for local Docker and wired with GitHub Actions CI/CD and monitoring.
 
 ---
 
@@ -26,8 +26,8 @@ This repository contains:
 
 - A React (Vite) SPA in `frontend/` for patients, doctors, and admins.
 - Spring Boot (Java 21) microservices in `profiles-service/`, `records-billing-service/`, `appointments-service/`, and `auth-service/`.
-- Keycloak realm configuration in `keycloak/` for OIDC authentication.
-- A Docker Compose stack that runs frontend + API services + Keycloak + MongoDB + Prometheus + Grafana locally.
+ - Auth is provided by `auth-service` which issues JWT tokens used by the APIs.
+ - A Docker Compose stack that runs frontend + API services + MongoDB + Prometheus + Grafana locally.
 - GitHub Actions workflows for CI (build & test) and CD (deploy to a self‑hosted Docker runner).
 
 DevOps‑oriented features:
@@ -52,7 +52,7 @@ High‑level architecture of the system running via Docker Compose:
 
 - Browser → React (Vite) frontend served by Nginx (in the `frontend` container).
 - Frontend Nginx → path-based API routing to `profiles-service`, `records-billing-service`, `appointments-service`, and `auth-service`.
-- Keycloak provides SSO/OIDC tokens consumed by all API services.
+- `auth-service` issues JWT tokens consumed by all API services.
 - API services → MongoDB database (`mongodb` container).
 - API services expose metrics to Prometheus, visualized in Grafana.
 
@@ -62,7 +62,7 @@ High‑level architecture of the system running via Docker Compose:
 
 - **Frontend**: React, Vite, Nginx (for production container image).
 - **Backend services**: Spring Boot (Java 21), Spring Data MongoDB, Spring Security OAuth2 Resource Server.
-- **Identity**: Keycloak (OIDC, realm roles).
+- **Identity**: `auth-service` (JWT tokens, role claim).
 - **Database**: MongoDB official Docker image.
 - **Build tools**: Maven (Java services), npm (frontend).
 - **Container / Orchestration**: Docker, Docker Compose.
@@ -79,7 +79,7 @@ Top‑level layout (simplified):
 - `records-billing-service/` – medical records and payments endpoints.
 - `appointments-service/` – appointments and timeslot endpoints.
 - `auth-service/` – registration and authentication helper service.
-- `keycloak/` – realm export for local SSO.
+ - (Keycloak removed) authentication is handled by `auth-service`.
 - `gateway/` – optional API edge Nginx config.
 - `frontend/` – React (Vite) SPA.
 - `docker-compose.yml` – local stack (frontend + API services + identity + DB + monitoring).
@@ -124,7 +124,7 @@ Once up:
 
 - Frontend: http://localhost:3000
 - Gateway API edge: http://localhost:8080/api
-- Keycloak: http://localhost:8082
+- Auth API (auth-service): http://localhost:8081
 - Prometheus: http://localhost:9090
 - Grafana: http://localhost:3001
 
@@ -213,7 +213,7 @@ High‑level pipeline:
    - Steps:
      - `docker compose pull --ignore-pull-failures`
      - `docker compose up -d --no-build --remove-orphans`
-     - Polls public/profile endpoints and Keycloak discovery until the stack is healthy.
+    - Polls public/profile endpoints and gateway discovery until the stack is healthy.
 
 ### Self‑hosted runner
 

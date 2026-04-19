@@ -58,11 +58,10 @@ jobs:
 
       - name: Wait for stack endpoints
         run: |
-          echo "Waiting for frontend API, gateway API, and Keycloak to become healthy..."
+          echo "Waiting for frontend API and gateway API to become healthy..."
           for i in $(seq 1 30); do
             FRONTEND_OK=0
             GATEWAY_OK=0
-            KEYCLOAK_OK=0
 
             if curl -sSf http://localhost:3000/api/public/today-at-a-glance -o /dev/null; then
               FRONTEND_OK=1
@@ -70,11 +69,8 @@ jobs:
             if curl -sSf http://localhost:8080/api/health -o /dev/null; then
               GATEWAY_OK=1
             fi
-            if curl -sSf http://localhost:8082/realms/medicalsystem/.well-known/openid-configuration -o /dev/null; then
-              KEYCLOAK_OK=1
-            fi
 
-            if [ "$FRONTEND_OK" -eq 1 ] && [ "$GATEWAY_OK" -eq 1 ] && [ "$KEYCLOAK_OK" -eq 1 ]; then
+            if [ "$FRONTEND_OK" -eq 1 ] && [ "$GATEWAY_OK" -eq 1 ]; then
               echo "Stack healthy"
               exit 0
             fi

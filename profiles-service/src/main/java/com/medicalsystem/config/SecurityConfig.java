@@ -1,5 +1,6 @@
 package com.medicalsystem.config;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
@@ -10,13 +11,17 @@ import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.oauth2.jwt.JwtDecoder;
+import org.springframework.security.oauth2.jwt.NimbusJwtDecoder;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter;
 import org.springframework.security.web.SecurityFilterChain;
 
+import javax.crypto.SecretKey;
+import javax.crypto.spec.SecretKeySpec;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
-
 @Configuration
 @EnableWebSecurity
 public class SecurityConfig {
@@ -25,15 +30,21 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
             JwtAuthenticationConverter jwtAuthConverter = new JwtAuthenticationConverter();
-            // Use Keycloak username (email in this project) as principal so existing
-            // authorization lookups by email keep working.
-            jwtAuthConverter.setPrincipalClaimName("preferred_username");
+            // Principal is the JWT subject produced by the local auth-service
+            jwtAuthConverter.setPrincipalClaimName("sub");
             jwtAuthConverter.setJwtGrantedAuthoritiesConverter(jwt -> {
                 List<GrantedAuthority> authorities = new ArrayList<>();
+                // Prefer a simple 'role' claim emitted by auth-service
+                Object directRole = jwt.getClaimAsString("role");
+                if (directRole != null) {
+                    authorities.add(new SimpleGrantedAuthority("ROLE_" + directRole.toString().toUpperCase()));
+                    return authorities;
+                }
+                // Fallback: support Keycloak-style realm_access.roles for backwards compatibility
                 Object realmAccessObj = jwt.getClaimAsMap("realm_access");
                 if (realmAccessObj instanceof java.util.Map) {
                     @SuppressWarnings("unchecked")
-                    java.util.Map<String,Object> realmAccess = (java.util.Map<String,Object>) realmAccessObj;
+                    java.util.Map<String, Object> realmAccess = (java.util.Map<String, Object>) realmAccessObj;
                     Object rolesObj = realmAccess.get("roles");
                     if (rolesObj instanceof Collection) {
                         for (Object r : (Collection<?>) rolesObj) {
@@ -63,5 +74,11 @@ public class SecurityConfig {
     @Bean
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
+    }
+    
+    @Bean
+    public JwtDecoder jwtDecoder(@Value("${jwt.secret}") String jwtSecret) {
+        SecretKey key = new SecretKeySpec(jwtSecret.getBytes(StandardCharsets.UTF_8), "HmacSHA256");
+        return NimbusJwtDecoder.withSecretKey(key).build();
     }
 }

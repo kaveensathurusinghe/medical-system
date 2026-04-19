@@ -28,7 +28,13 @@ const Login = () => {
     setError('');
     setLoading(true);
     try {
-      await keycloakService.login();
+      await keycloakService.login({ username: email, password });
+      const role = localStorage.getItem('role');
+      if (role && roleRoute[role]) {
+        navigate(roleRoute[role]);
+      } else {
+        navigate('/');
+      }
     } catch (err) {
       setError('Login failed');
     } finally {
@@ -49,18 +55,37 @@ const Login = () => {
 
         {error && <p className="mt-4 rounded-xl bg-red-50 px-3 py-2 text-sm text-red-700">{error}</p>}
 
-        <div className="mt-6 space-y-4">
+        <form className="mt-6 space-y-4" onSubmit={handleLogin}>
+          <div>
+            <label className="block text-sm font-medium text-slate-700">Email</label>
+            <input
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+              className="mt-1 w-full rounded-md border px-3 py-2"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-slate-700">Password</label>
+            <input
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+              className="mt-1 w-full rounded-md border px-3 py-2"
+            />
+          </div>
           <motion.button
-            type="button"
-            onClick={handleLogin}
+            type="submit"
             className="mt-2 w-full rounded-xl bg-cyan-700 px-4 py-3 font-semibold text-white transition hover:bg-cyan-800 disabled:opacity-60"
             whileHover={{ scale: 1.01 }}
             whileTap={{ scale: 0.99 }}
             disabled={loading}
           >
-            {loading ? 'Redirecting...' : 'Sign in with SSO'}
+            {loading ? 'Signing in...' : 'Sign in'}
           </motion.button>
-        </div>
+        </form>
 
         <p className="mt-6 text-sm text-slate-600">
           Need an account?{' '}

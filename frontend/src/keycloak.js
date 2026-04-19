@@ -1,88 +1,85 @@
-import Keycloak from 'keycloak-js';
+// Replaced Keycloak SSO client with a minimal local JWT auth helper.
+// Keeps the same exported shape (`initKeycloak`, `login`, `logout`, `getToken`, `isLoggedIn`)
+// so existing components don't need large changes.
 
-const APP_ROLES = ['ADMIN', 'DOCTOR', 'PATIENT'];
-
-const resolveAppRole = (roles) => {
-  if (!Array.isArray(roles)) return null;
-  for (const preferred of APP_ROLES) {
-    const found = roles.find((r) => String(r).toUpperCase() === preferred);
-    if (found) return `ROLE_${preferred}`;
-  }
-  return null;
-};
-
-const keycloakConfig = {
-  url: (import.meta.env.VITE_KEYCLOAK_URL) || (window.location.protocol + '//' + window.location.hostname + ':8082'),
-  realm: (import.meta.env.VITE_KEYCLOAK_REALM) || 'medicalsystem',
-  clientId: (import.meta.env.VITE_KEYCLOAK_CLIENT) || 'medical-system-client',
-};
-
-const keycloak = new Keycloak(keycloakConfig);
-
-const setTokenData = () => {
+const decodeJwt = (token) => {
   try {
-    if (keycloak.token) {
-      localStorage.setItem('token', keycloak.token);
-    }
-    const roles = keycloak.tokenParsed?.realm_access?.roles;
-    const appRole = resolveAppRole(roles);
-    if (appRole) {
-      localStorage.setItem('role', appRole);
-    } else {
-      localStorage.removeItem('role');
-    }
-    if (keycloak.tokenParsed?.sub) {
-      localStorage.setItem('userId', keycloak.tokenParsed.sub);
-    }
+    const payload = token.split('.')[1];
+    const base64 = payload.replace(/-/g, '+').replace(/_/g, '/');
+    const json = JSON.parse(decodeURIComponent(Array.prototype.map.call(atob(base64), (c) => '%'+('00'+c.charCodeAt(0).toString(16)).slice(-2)).join('')));
+    return json;
+  } catch (e) {
+    return null;
+  }
+};
+
+const setTokenData = (token) => {
+  try {
+    if (token) localStorage.setItem('token', token);
+    const parsed = decodeJwt(token);
+    const role = parsed?.role;
+    if (role) localStorage.setItem('role', `ROLE_${String(role).toUpperCase()}`);
+    else localStorage.removeItem('role');
+    if (parsed?.sub) localStorage.setItem('userId', parsed.sub);
+    else localStorage.removeItem('userId');
   } catch (e) {
     // ignore
   }
 };
 
 const initKeycloak = (onAuthenticated) =>
-  keycloak
-    .init({ onLoad: 'check-sso', pkceMethod: 'S256', checkLoginIframe: false })
-    .then((authenticated) => {
-      if (authenticated) {
-        setTokenData();
-        if (onAuthenticated) onAuthenticated();
-      } else {
-        // Prevent stale client-side auth state when SSO session is not active.
-        localStorage.removeItem('token');
-        localStorage.removeItem('role');
-        localStorage.removeItem('userId');
-      }
+  new Promise((resolve) => {
+    const token = localStorage.getItem('token');
+    if (token) {
+      setTokenData(token);
+      if (onAuthenticated) onAuthenticated();
+      resolve(true);
+    } else {
+      resolve(false);
+    }
+  });
 
-      // token refresh loop
-      setInterval(() => {
-        keycloak
-          .updateToken(70)
-          .then((refreshed) => {
-            if (refreshed) setTokenData();
-          })
-          .catch(() => {
-            // failed to refresh token
-          });
-      }, 60000);
+const login = async (creds) => {
+  let username, password;
+  if (creds && creds.username && creds.password) {
+    username = creds.username;
+    password = creds.password;
+  } else {
+    // fallback prompt to avoid breaking existing call sites that call login() without args
+    username = window.prompt('Email:');
+    password = window.prompt('Password:');
+    if (!username || !password) throw new Error('Login cancelled');
+  }
 
-      return authenticated;
-    });
+  const res = await fetch('/api/auth/login', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ username, password }),
+  });
+  if (!res.ok) {
+    const body = await res.json().catch(() => null);
+    throw new Error(body?.message || 'Login failed');
+  }
+  const data = await res.json();
+  const token = data.token;
+  setTokenData(token);
+  return true;
+};
 
-const login = (options) => keycloak.login(options);
-const logout = (options) => {
+const logout = async () => {
   try {
     localStorage.removeItem('token');
     localStorage.removeItem('role');
     localStorage.removeItem('userId');
   } catch (e) {}
-  return keycloak.logout(options);
+  return Promise.resolve();
 };
 
-const getToken = () => keycloak.token;
-const isLoggedIn = () => !!keycloak.token;
+const getToken = () => localStorage.getItem('token');
+const isLoggedIn = () => !!getToken();
 
 export default {
-  keycloak,
+  keycloak: null,
   initKeycloak,
   login,
   logout,

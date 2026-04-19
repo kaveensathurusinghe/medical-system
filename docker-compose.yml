@@ -34,8 +34,6 @@ services:
         condition: service_started
       records-billing-service:
         condition: service_started
-      keycloak:
-        condition: service_started
     expose:
       - "8084"
 
@@ -55,23 +53,9 @@ services:
         condition: service_healthy
       appointments-service:
         condition: service_started
-      keycloak:
-        condition: service_started
+      
     expose:
       - "8085"
-
-  keycloak:
-    image: quay.io/keycloak/keycloak:21.1.1
-    container_name: medicalsystem-keycloak
-    environment:
-      - KEYCLOAK_ADMIN=admin
-      - KEYCLOAK_ADMIN_PASSWORD=admin
-    # start in dev mode and import any realm files under /opt/keycloak/data/import
-    command: start-dev --import-realm
-    ports:
-      - "8082:8080"
-    volumes:
-      - ./keycloak/realm-export.json:/opt/keycloak/data/import/realm-export.json:ro
 
   auth-service:
     build:
@@ -80,18 +64,16 @@ services:
     image: ghcr.io/${GHCR_OWNER:-kaveensathurusinghe}/medical-system-auth:${AUTH_IMAGE_TAG:-latest}
     container_name: medicalsystem-auth
     restart: unless-stopped
+    env_file:
+      - .env.${COMPOSE_ENV:-prod}
     environment:
       - SPRING_PROFILES_ACTIVE=default
-      - KEYCLOAK_BASE_URL=http://keycloak:8080
-      - KEYCLOAK_REALM=medicalsystem
-      - KEYCLOAK_ADMIN_REALM=master
-      - KEYCLOAK_ADMIN_CLIENT_ID=admin-cli
-      - KEYCLOAK_ADMIN_USERNAME=admin
-      - KEYCLOAK_ADMIN_PASSWORD=admin
     ports:
       - "8081:8081"
 
   appointments-service:
+    env_file:
+      - .env.${COMPOSE_ENV:-prod}
     build:
       context: ./appointments-service
       dockerfile: Dockerfile
@@ -119,7 +101,6 @@ services:
       - records-billing-service
       - appointments-service
       - auth-service
-      - keycloak
 
   frontend:
     env_file:
