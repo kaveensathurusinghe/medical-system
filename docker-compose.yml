@@ -17,7 +17,6 @@ services:
       start_period: 20s
 
   profiles-service:
-    platform: linux/arm64
     env_file:
       - .env.${COMPOSE_ENV:-prod}
     image: ghcr.io/${GHCR_OWNER:-kaveensathurusinghe}/medical-system-profiles:${PROFILES_IMAGE_TAG:-latest}
@@ -39,7 +38,6 @@ services:
       - "8084"
 
   records-billing-service:
-    platform: linux/arm64
     env_file:
       - .env.${COMPOSE_ENV:-prod}
     image: ghcr.io/${GHCR_OWNER:-kaveensathurusinghe}/medical-system-records-billing:${RECORDS_BILLING_IMAGE_TAG:-latest}
@@ -60,7 +58,6 @@ services:
       - "8085"
 
   auth-service:
-    platform: linux/arm64
     build:
       context: .
       dockerfile: auth-service/Dockerfile
@@ -75,7 +72,6 @@ services:
       - "8081:8081"
 
   appointments-service:
-    platform: linux/arm64
     env_file:
       - .env.${COMPOSE_ENV:-prod}
     build:
@@ -107,7 +103,6 @@ services:
       - auth-service
 
   frontend:
-    platform: linux/arm64
     env_file:
       - .env.${COMPOSE_ENV:-prod}
     image: ghcr.io/${GHCR_OWNER:-kaveensathurusinghe}/medical-system-frontend:${FRONTEND_IMAGE_TAG:-latest}
